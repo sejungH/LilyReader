@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles/style.css">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="scripts/dbController.js"></script>
+    <script src="scripts/dcController.js"></script>
+
+    <title>DCReader</title>
+</head>
+
+<body data-bs-theme="dark">
+    <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand">DCReader</a>
+            <form class="d-flex" role="search">
+                <input class="form-control me-2" type="search" placeholder="시리즈 검색" aria-label="Search" />
+                <button class="btn btn-outline-primary text-nowrap" type="submit">검색</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container-lg py-3 d-none">
+        <div class="card px-3 py-0">
+            <div class="d-flex justify-content-between align-items-center my-3">
+                <a href="javascript:toggleSeriesList()" class="mb-0 p-0 text-decoration-none text-body"><span
+                        class="lead">시리즈 목록 <i class="bi bi-chevron-up" id="seriesListIcon"></i></span></a>
+                <button type="button" class="btn btn-sm btn-success">
+                    시리즈 추가
+                </button>
+            </div>
+            <div class="collapse show list-group list-group-flush mb-3" id="seriesList"></div>
+        </div>
+
+        <div class="card my-3 collapse" id="episodeCard">
+            <div class="card-header px-3 py-2">
+                <div class="dropdown-center mt-2 my-3">
+                    <button class="btn dropdown-toggle py-0 w-100" data-bs-toggle="dropdown" aria-expanded="false"
+                        data-bs-auto-close="outside">
+                        <span id="episode_series" class="lead fw-bold text-wrap">시리즈 이름</span>
+                    </button>
+                    <ul id="episode_list" class="dropdown-menu dropdown-menu-dark w-100"></ul>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <button type="button" class="btn btn-sm btn-outline-light prev_episode">
+                            <i class="bi bi-chevron-left"></i> 이전화
+                        </button>
+                    </div>
+                    <div class="col-6 text-end"><button type="button" class="btn btn-sm btn-outline-light next_episode">
+                            다음화 <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body px-3 py-4">
+                <h1 class="h3 fw-bold mb-5" id="episode_title">에피소드 제목</h1>
+                <div id="episode_content">내용</div>
+            </div>
+            <div class="card-footer px-3 py-2">
+                <div class="row">
+                    <div class="col-6">
+                        <button type="button" class="btn btn-sm btn-outline-light prev_episode">
+                            <i class="bi bi-chevron-left"></i> 이전화
+                        </button>
+                    </div>
+                    <div class="col-6 text-end">
+                        <button type="button" class="btn btn-sm btn-outline-light next_episode">
+                            다음화 <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="seriesEditModal" tabindex="-1" aria-labelledby="seriesEditModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="seriesEditModalLabel"></h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="input_series_title" class="form-label">시리즈</label>
+                    <div class="input-group mb-4">
+                        <span class="input-group-text">제목</span>
+                        <input type="text" id="input_series_title" class="form-control" placeholder="시리즈 이름을 입력하세요" />
+                    </div>
+
+                    <label for="input_episode_list" class="form-label">에피소드 목록</label>
+                    <div class="list-group list-group-flush" id="episode_list_reorder"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2 w-100" onclick="addNewEpisode()">
+                        에피소드 추가
+                    </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSeries()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="spinner" class="bg-dark bg-opacity-50 position-fixed top-0 bottom-0 start-0 end-0 z-5">
+        <div class="position-absolute top-50 start-50 translate-middle z-3">
+            <div class="d-flex justify-content-center my-3">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const dbController = new DBController();
+        const dcController = new DCController();
+        let result = [];
+        debug();
+
+        new Sortable(document.getElementById('episode_list_reorder'), {
+            handle: '.handle',
+            animation: 150,
+            ghostClass: 'blue-background-class',
+        });
+
+        function debug(mode = false) {
+            if (mode) {
+                hideSpinner();
+                document.querySelector('.container-lg').classList.remove('d-none');
+                document.getElementById('episodeCard').classList.remove('collapse');
+
+                result = [
+                    {
+                        series: '유부녀 교사가 여고생 제자에게 빠져드는 이야기',
+                        count: 3,
+                        episodes: [
+                            { index: 0, episode: '1화', id: 1663475 },
+                            { index: 1, episode: '2화', id: 1663545 },
+                            { index: 2, episode: '3화', id: 1663550 }
+                        ]
+                    }
+                ];
+
+                generateList();
+
+            } else {
+                loadData();
+            }
+        }
+
+        function loadData() {
+            dbController.fetchData('googlesheet').then(data => {
+                result = data.reduce((acc, cur) => {
+                    const found = acc.find(item => item.series === cur.series);
+                    if (found) {
+                        found.count += 1;
+                        found.episodes.push({ index: cur.index, episode: cur.episode, id: cur.id });
+                        found.episodes.sort((a, b) => a.index - b.index);
+                    } else {
+                        acc.push({ series: cur.series, count: 1, episodes: [{ index: cur.index, episode: cur.episode, id: cur.id }] });
+                    }
+                    return acc;
+                }, []);
+
+                generateList();
+            });
+        }
+
+        function generateList() {
+            const seriesList = document.getElementById('seriesList');
+            seriesList.innerHTML = ''; // 기존 목록 초기화
+
+            if (result.length === 0) {
+                seriesList.innerHTML = '<div class="list-group-item text-center">등록된 시리즈가 없습니다.</div>';
+                hideSpinner();
+                return;
+            }
+
+            for (const item of result) {
+                const seriesItem = document.createElement('a');
+                seriesItem.className = 'list-group-item list-group-item-action';
+                seriesItem.href = '#';
+                seriesItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
+                        data-bs-target="#${item.series.replaceAll(' ', '_')}-episodes" aria-expanded="false" aria-controls="${item.series.replaceAll(' ', '_')}-episodes">
+                        <span>${item.series}</span>
+                        <span class="badge text-bg-light rounded-pill ms-3">${item.count}</span>
+                    </div> 
+                    <div class="collapse mt-2" id="${item.series.replaceAll(' ', '_')}-episodes">
+                        <div class="list-group">
+                            ${item.episodes.map(ep => `
+                                <a href="javascript:openEpisode('${item.series}', ${ep.id})" class="list-group-item list-group-item-action py-1">${ep.episode}</a>
+                            `).join('')}
+                        </div>
+                        <div class="text-end mt-2">
+                            <button type="button" onclick="openSeriesEditModal('${item.series}')" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#seriesEditModal">편집</button>
+                        </div>
+                    </div>
+                `;
+                seriesList.appendChild(seriesItem);
+            }
+
+            hideSpinner();
+            document.querySelector('.container-lg').classList.remove('d-none');
+        }
+
+        function openEpisode(series, id) {
+            showSpinner();
+
+            const episodeCardCollapse = new bootstrap.Collapse(document.getElementById('episodeCard'), { toggle: false });
+            episodeCardCollapse.hide();
+
+            dbController.fetchData('dcinside', id).then(data => {
+                const episodes = result.find(item => item.series === series).episodes;
+                const currentIndex = episodes.findIndex(ep => ep.id == id);
+
+                document.getElementById('episode_series').innerText = series;
+                document.getElementById('episode_list').innerHTML = episodes.map(ep => {
+                    if (ep.index == currentIndex) {
+                        return `<li class="dropdown-item text-truncate active" aria-current="true" onclick="openEpisode('${series}', ${ep.id})">${ep.episode}</li>`;
+                    } else {
+                        return `<li class="dropdown-item text-truncate" onclick="openEpisode('${series}', ${ep.id})">${ep.episode}</li>`
+                    }
+                    return
+                }).join('');
+                document.getElementById('episode_title').innerText = data.title;
+                document.getElementById('episode_content').innerHTML = dcController.trimHTML(data.content);
+
+
+                episodes.forEach(ep => {
+                    if (ep.index == currentIndex) {
+                        var prevEpisode = document.querySelectorAll('.prev_episode');
+                        var nextEpisode = document.querySelectorAll('.next_episode');
+
+                        if (currentIndex < 1) {
+                            prevEpisode.forEach(el => el.classList.add('disabled'));
+
+                        } else if (currentIndex >= episodes.length - 1) {
+                            nextEpisode.forEach(el => el.classList.add('disabled'));
+
+                        } else {
+                            prevEpisode.forEach(el => el.classList.remove('disabled'));
+                            nextEpisode.forEach(el => el.classList.remove('disabled'));
+                        }
+
+
+                        prevEpisode.forEach(el => {
+                            el.onclick = () => {
+                                if (currentIndex > 0) {
+                                    openEpisode(series, episodes[currentIndex - 1].id);
+                                }
+                            };
+                        });
+
+                        nextEpisode.forEach(el => {
+                            el.onclick = () => {
+                                if (currentIndex < episodes.length - 1) {
+                                    openEpisode(series, episodes[currentIndex + 1].id);
+                                }
+                            };
+                        });
+                    }
+                });
+
+                hideSpinner();
+                episodeCardCollapse.show();
+                document.getElementById('episodeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                document.getElementById('seriesListIcon').classList.remove('bi-chevron-up');
+                document.getElementById('seriesListIcon').classList.add('bi-chevron-down');
+                const seriesListCollapse = new bootstrap.Collapse(document.getElementById('seriesList'), { toggle: false });
+                seriesListCollapse.hide()
+            });
+        }
+
+        function hideSpinner() {
+            document.getElementById('spinner').classList.remove('d-flex');
+            document.getElementById('spinner').classList.add('d-none');
+        }
+
+        function showSpinner() {
+            document.getElementById('spinner').classList.remove('d-none');
+            document.getElementById('spinner').classList.add('d-flex');
+        }
+
+        function toggleSeriesList() {
+            const seriesListCollapse = new bootstrap.Collapse(document.getElementById('seriesList'), { toggle: false });
+            const seriesListIcon = document.getElementById('seriesListIcon');
+
+            if (seriesListCollapse._isShown()) {
+                seriesListCollapse.hide();
+                seriesListIcon.classList.remove('bi-chevron-up');
+                seriesListIcon.classList.add('bi-chevron-down');
+
+            } else {
+                seriesListCollapse.show();
+                seriesListIcon.classList.remove('bi-chevron-down');
+                seriesListIcon.classList.add('bi-chevron-up');
+            }
+        }
+
+        function openSeriesEditModal(series) {
+            document.getElementById('seriesEditModalLabel').innerText = series ? '시리즈 편집' : '새 시리즈 추가';
+
+            const seriesEditModal = document.getElementById('seriesEditModal');
+            const inputSeriesTitle = document.getElementById('input_series_title');
+            inputSeriesTitle.value = series;
+            inputSeriesTitle.disabled = !!series;
+
+            const episodes = result.find(item => item.series === series).episodes;
+            const episodeListReorder = document.getElementById('episode_list_reorder');
+            episodeListReorder.innerHTML = '';
+
+            for (const episode of episodes) {
+                addNewEpisode(episode);
+            }
+        }
+
+        function addNewEpisode(episode = null) {
+            const episodeListReorder = document.getElementById('episode_list_reorder');
+            const newEpisodeItem = document.createElement('div');
+            newEpisodeItem.className = 'list-group-item border-0 d-flex justify-content-between align-items-center px-0 py-1';
+            if (episode) {
+                newEpisodeItem.innerHTML = `
+                <i class="bi bi-chevron-expand me-2 handle"></i>
+                <div class="w-100"> 
+                    <span class="opacity-50"><small><i>${episode.episode}</i></small></span>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                        <input type="text" class="form-control" value="${dcController.generateURL(episode.id)}" />
+                        <button type="button" class="btn btn-danger" onclick='removeEpisode(this)'><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            } else {
+                newEpisodeItem.innerHTML = `
+                <i class="bi bi-chevron-expand me-2 handle"></i>
+                <div class="w-100"> 
+                    <span class="opacity-50"><small><i></i></small></span>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                        <input type="text" class="form-control" />
+                        <button type="button" class="btn btn-danger" onclick='removeEpisode(this)'><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            }
+
+            episodeListReorder.appendChild(newEpisodeItem);
+        }
+
+        function removeEpisode(button) {
+            const episodeItem = button.closest('.list-group-item');
+            episodeItem.remove();
+        }
+
+        function saveSeries() {
+            const seriesTitle = document.getElementById('input_series_title').value;
+            const series = result.find(item => item.series === seriesTitle)
+
+            if (series) {
+                showSpinner();
+                const episodeItems = document.getElementById('episode_list_reorder').querySelectorAll('input[type="text"]');
+
+                if (episodeItems.length == 0) {
+                    alert('에피소드를 하나 이상 입력하세요.');
+                    hideSpinner();
+                    return;
+                } else {
+                    const seriesEditModal = document.getElementById('seriesEditModal');
+                    const modal = bootstrap.Modal.getInstance(seriesEditModal);
+                    if (!modal) {
+                        modal = new bootstrap.Modal(seriesEditModal);
+                    }
+                    modal.hide();
+
+                    dbController.updateEpisodes(series, episodeItems)
+                        .then(() => {
+                            loadData();
+                        });
+                }
+
+            }
+        }
+
+
+
+        // document.getElementById('postBtn').addEventListener('click', () => {
+        //     const data = ['A', 'B', 'C'];
+        //     dbController.writeData(data)
+        // });
+
+        // dbController.fetchData('dcinside', '1663475').then(data => {
+        //     document.getElementById('title').innerText = data.title;
+        //     document.getElementById('content').innerHTML = data.content;
+        // });
+
+    </script>
+</body>
+
+</html>

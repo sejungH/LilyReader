@@ -1,0 +1,21 @@
+@font-face {
+    font-family: 'RIDIBatang';
+    src: url('../fonts/RIDIBatang.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* 폰트 적용 예시 */
+#episode_title,
+#episode_content {
+    font-family: 'RIDIBatang', sans-serif;
+}
+
+
+#episodeCard p {
+    margin: 0;
+}
+
+#episodeCard img {
+    width: 100%;
+}
