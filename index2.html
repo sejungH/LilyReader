@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles/style.css">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="scripts/seriesController.js"></script>
+
+    <title>DCReader</title>
+</head>
+
+<body data-bs-theme="dark">
+
+    <script type="module">
+        // Firebase SDK import
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // Firebase 프로젝트 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4ytSbKyzAfnTNNw3cKRN9VOCW6ORPPBY",
+            authDomain: "dcreader-project.firebaseapp.com",
+            projectId: "dcreader-project",
+            storageBucket: "dcreader-project.firebasestorage.app",
+            messagingSenderId: "612017471498",
+            appId: "1:612017471498:web:b46b8b23074e0b1a065ff3",
+            measurementId: "G-GP8PTD3TLS"
+        };
+
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // // 데이터 쓰기 예시
+        // async function writeData() {
+        //     try {
+        //         const docRef = await addDoc(collection(db, "users"), {
+        //             name: "홍길동",
+        //             age: 25
+        //         });
+        //         console.log("Document written with ID: ", docRef.id);
+        //     } catch (e) {
+        //         console.error("Error adding document: ", e);
+        //     }
+        // }
+
+        // 데이터 읽기 예시
+        async function readData() {
+            const querySnapshot = await getDocs(collection(db, "series"));
+            querySnapshot.forEach((doc) => {
+                console.log(doc.id, " => ", doc.data());
+            });
+        }
+
+        // // 실행
+        // writeData();
+        readData();
+        // const title = await Episode.getTitleFromURL("https://gall.dcinside.com/mgallery/board/view/?id=lilyfever&no=1663475&search_head=30&page=1"); 
+        // console.log("제목:", title);
+
+        fetch('https://corsproxy.io/?url=https://m.dcinside.com/board/lilyfever/1716552')
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const title = doc.querySelector('title').textContent;
+                console.log(title);
+            });
+    </script>
+</body>
+
+</html>
