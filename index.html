@@ -5,111 +5,85 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
-        crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="styles/style.css">
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="scripts/dbController.js"></script>
-    <script src="scripts/dcController.js"></script>
+    <script src="./scripts/seriesController.js"></script>
+    <script src="./scripts/functions.js"></script>
 
     <title>DCReader</title>
 </head>
 
 <body data-bs-theme="dark">
-    <nav class="navbar bg-body-tertiary">
-        <div class="container-fluid">
-            <a class="navbar-brand">DCReader</a>
-            <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="시리즈 검색" aria-label="Search" />
-                <button class="btn btn-outline-primary text-nowrap" type="submit">검색</button>
-            </form>
+    <nav class="navbar navbar-expand-md bg-primary-subtle">
+        <div class="container-md">
+            <a class="navbar-brand" href="/"><i class="bi bi-book-fill"></i> DC Reader</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
+                <form class="d-flex ms-auto" role="search">
+                    <input class="form-control me-2" type="search" placeholder="제목" aria-label="Search" />
+                    <button class="btn btn-outline-primary text-nowrap" type="submit">검색</button>
+                </form>
+            </div>
         </div>
     </nav>
 
-    <div class="container-lg py-3 d-none">
-        <div class="card px-3 py-0">
-            <div class="d-flex justify-content-between align-items-center my-3">
-                <a href="javascript:toggleSeriesList()" class="mb-0 p-0 text-decoration-none text-body"><span
-                        class="lead">시리즈 목록 <i class="bi bi-chevron-up" id="seriesListIcon"></i></span></a>
-                <button type="button" class="btn btn-sm btn-success">
-                    시리즈 추가
-                </button>
-            </div>
-            <div class="collapse show list-group list-group-flush mb-3" id="seriesList"></div>
+    <div class="container-md">
+        <div class="d-flex">
+            <button class="btn btn-sm btn-primary mt-3 ms-auto" onclick="addNewSeries()"><i
+                    class="bi bi-plus-circle-fill"></i> 새 시리즈 추가</button>
         </div>
-
-        <div class="card my-3 collapse" id="episodeCard">
-            <div class="card-header px-3 py-2">
-                <div class="dropdown-center mt-2 my-3">
-                    <button class="btn dropdown-toggle py-0 w-100" data-bs-toggle="dropdown" aria-expanded="false"
-                        data-bs-auto-close="outside">
-                        <span id="episode_series" class="lead fw-bold text-wrap">시리즈 이름</span>
-                    </button>
-                    <ul id="episode_list" class="dropdown-menu dropdown-menu-dark w-100"></ul>
-                </div>
-                <div class="row">
-                    <div class="col-6">
-                        <button type="button" class="btn btn-sm btn-outline-light prev_episode">
-                            <i class="bi bi-chevron-left"></i> 이전화
-                        </button>
-                    </div>
-                    <div class="col-6 text-end"><button type="button" class="btn btn-sm btn-outline-light next_episode">
-                            다음화 <i class="bi bi-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body px-3 py-4">
-                <h1 class="h3 fw-bold mb-5" id="episode_title">에피소드 제목</h1>
-                <div id="episode_content">내용</div>
-            </div>
-            <div class="card-footer px-3 py-2">
-                <div class="row">
-                    <div class="col-6">
-                        <button type="button" class="btn btn-sm btn-outline-light prev_episode">
-                            <i class="bi bi-chevron-left"></i> 이전화
-                        </button>
-                    </div>
-                    <div class="col-6 text-end">
-                        <button type="button" class="btn btn-sm btn-outline-light next_episode">
-                            다음화 <i class="bi bi-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="accordion my-3" id="series-list"></div>
     </div>
 
-    <div class="modal fade" id="seriesEditModal" tabindex="-1" aria-labelledby="seriesEditModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="newSeriesModal" tabindex="-1" aria-labelledby="newSeriesModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="seriesEditModalLabel"></h1>
+                    <h1 class="modal-title fs-5" id="newSeriesModalLabel">새 시리즈</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <label for="input_series_title" class="form-label">시리즈</label>
-                    <div class="input-group mb-4">
-                        <span class="input-group-text">제목</span>
-                        <input type="text" id="input_series_title" class="form-control" placeholder="시리즈 이름을 입력하세요" />
+                <form onsubmit="saveNewSeries(); return false;">
+                    <div class="modal-body row">
+                        <div class="col-md-3 text-center">
+                            <div id="cover-placeholder" class="ratio bg-secondary mx-auto"
+                                style="--bs-aspect-ratio: 150%; max-width: 100%;"></div>
+                            <img src="" alt="Cover Image" class="img-fluid mx-auto collapse" id="cover-preview"
+                                style="max-width: 100%;" />
+                        </div>
+                        <div class="col-md-9 mt-3 mt-md-0">
+                            <p class="mb-2">시리즈</p>
+                            <div class="input-group input-group-sm mb-3">
+                                <span class="input-group-text">제목</span>
+                                <input type="text" id="input-series-title" class="form-control" placeholder="시리즈 제목"
+                                    required />
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                <input type="url" id="input-series-cover" class="form-control" placeholder="커버 이미지 URL"
+                                    onchange="previewCoverImage(this)" required />
+                            </div>
+                            <p class="mt-4 mb-2">에피소드 목록</p>
+                            <div class="list-group list-group-flush" id="episode-list"></div>
+                            <div class="d-flex">
+                                <button type="button" class="btn btn-sm btn-success ms-auto mt-2"
+                                    onclick="newEpisode('new-series')"><i class="bi bi-plus-circle-fill"></i> 에피소드
+                                    추가</button>
+                            </div>
+                        </div>
                     </div>
-
-                    <label for="input_episode_list" class="form-label">에피소드 목록</label>
-                    <div class="list-group list-group-flush" id="episode_list_reorder"></div>
-                    <button type="button" class="btn btn-sm btn-outline-primary mt-2 w-100" onclick="addNewEpisode()">
-                        에피소드 추가
-                    </button>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                    <button type="button" class="btn btn-primary" onclick="saveSeries()">저장</button>
-                </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                        <button type="submit" id="save-new-series" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -124,290 +98,229 @@
         </div>
     </div>
 
+    <script type="module">
+        import { FirebaseDB } from "./scripts/firebaseDB.mjs";
 
-    <script>
-        const dbController = new DBController();
-        const dcController = new DCController();
-        let result = [];
-        debug();
+        const firebaseDB = new FirebaseDB();
 
-        new Sortable(document.getElementById('episode_list_reorder'), {
+        var seriesList = [];
+        loadSeriesList(firebaseDB);
+
+        new Sortable(document.getElementById(`episode-list`), {
             handle: '.handle',
             animation: 150,
             ghostClass: 'blue-background-class',
         });
 
-        function debug(mode = false) {
-            if (mode) {
-                hideSpinner();
-                document.querySelector('.container-lg').classList.remove('d-none');
-                document.getElementById('episodeCard').classList.remove('collapse');
+        window.addNewSeries = function () {
+            document.getElementById('episode-list').innerHTML = '';
+            newEpisode("new-series");
+            document.getElementById('input-series-title').value = '';
+            document.getElementById('input-series-cover').value = '';
 
-                result = [
-                    {
-                        series: '유부녀 교사가 여고생 제자에게 빠져드는 이야기',
-                        count: 3,
-                        episodes: [
-                            { index: 0, episode: '1화', id: 1663475 },
-                            { index: 1, episode: '2화', id: 1663545 },
-                            { index: 2, episode: '3화', id: 1663550 }
-                        ]
-                    }
-                ];
-
-                generateList();
-
-            } else {
-                loadData();
+            const newSeriesModal = document.getElementById('newSeriesModal');
+            let modal = bootstrap.Modal.getInstance(newSeriesModal);
+            if (!modal) {
+                modal = new bootstrap.Modal(newSeriesModal);
             }
+            modal.show();
         }
 
-        function loadData() {
-            dbController.fetchData('googlesheet').then(data => {
-                result = data.reduce((acc, cur) => {
-                    const found = acc.find(item => item.series === cur.series);
-                    if (found) {
-                        found.count += 1;
-                        found.episodes.push({ index: cur.index, episode: cur.episode, id: cur.id });
-                        found.episodes.sort((a, b) => a.index - b.index);
-                    } else {
-                        acc.push({ series: cur.series, count: 1, episodes: [{ index: cur.index, episode: cur.episode, id: cur.id }] });
-                    }
-                    return acc;
-                }, []);
-
-                generateList();
-            });
-        }
-
-        function generateList() {
-            const seriesList = document.getElementById('seriesList');
-            seriesList.innerHTML = ''; // 기존 목록 초기화
-
-            if (result.length === 0) {
-                seriesList.innerHTML = '<div class="list-group-item text-center">등록된 시리즈가 없습니다.</div>';
-                hideSpinner();
-                return;
+        window.saveNewSeries = async function () {
+            const newSeriesModal = document.getElementById('newSeriesModal');
+            let modal = bootstrap.Modal.getInstance(newSeriesModal);
+            if (!modal) {
+                modal = new bootstrap.Modal(newSeriesModal);
             }
+            modal.hide();
 
-            for (const item of result) {
-                const seriesItem = document.createElement('a');
-                seriesItem.className = 'list-group-item list-group-item-action';
-                seriesItem.href = '#';
-                seriesItem.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
-                        data-bs-target="#${item.series.replaceAll(' ', '_')}-episodes" aria-expanded="false" aria-controls="${item.series.replaceAll(' ', '_')}-episodes">
-                        <span>${item.series}</span>
-                        <span class="badge text-bg-light rounded-pill ms-3">${item.count}</span>
-                    </div> 
-                    <div class="collapse mt-2" id="${item.series.replaceAll(' ', '_')}-episodes">
-                        <div class="list-group">
-                            ${item.episodes.map(ep => `
-                                <a href="javascript:openEpisode('${item.series}', ${ep.id})" class="list-group-item list-group-item-action py-1">${ep.episode}</a>
-                            `).join('')}
-                        </div>
-                        <div class="text-end mt-2">
-                            <button type="button" onclick="openSeriesEditModal('${item.series}')" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#seriesEditModal">편집</button>
-                        </div>
-                    </div>
-                `;
-                seriesList.appendChild(seriesItem);
-            }
-
-            hideSpinner();
-            document.querySelector('.container-lg').classList.remove('d-none');
-        }
-
-        function openEpisode(series, id) {
             showSpinner();
+            var title = document.getElementById('input-series-title').value;
+            var cover = document.getElementById('input-series-cover').value;
 
-            const episodeCardCollapse = new bootstrap.Collapse(document.getElementById('episodeCard'), { toggle: false });
-            episodeCardCollapse.hide();
+            var newEpisodes = [];
+            for (var ep of document.getElementById('episode-list').querySelectorAll('input[type="url"]')) {
+                newEpisodes.push(JSON.parse(ep.getAttribute('data-episode')));
+            }
+            console.log(newEpisodes);
 
-            dbController.fetchData('dcinside', id).then(data => {
-                const episodes = result.find(item => item.series === series).episodes;
-                const currentIndex = episodes.findIndex(ep => ep.id == id);
+            var seriesId = await firebaseDB.writeData({ title: title, cover: cover, episodes: newEpisodes });
 
-                document.getElementById('episode_series').innerText = series;
-                document.getElementById('episode_list').innerHTML = episodes.map(ep => {
-                    if (ep.index == currentIndex) {
-                        return `<li class="dropdown-item text-truncate active" aria-current="true" onclick="openEpisode('${series}', ${ep.id})">${ep.episode}</li>`;
-                    } else {
-                        return `<li class="dropdown-item text-truncate" onclick="openEpisode('${series}', ${ep.id})">${ep.episode}</li>`
-                    }
-                    return
-                }).join('');
-                document.getElementById('episode_title').innerText = data.title;
-                document.getElementById('episode_content').innerHTML = dcController.trimHTML(data.content);
-
-
-                episodes.forEach(ep => {
-                    if (ep.index == currentIndex) {
-                        var prevEpisode = document.querySelectorAll('.prev_episode');
-                        var nextEpisode = document.querySelectorAll('.next_episode');
-
-                        if (currentIndex < 1) {
-                            prevEpisode.forEach(el => el.classList.add('disabled'));
-
-                        } else if (currentIndex >= episodes.length - 1) {
-                            nextEpisode.forEach(el => el.classList.add('disabled'));
-
-                        } else {
-                            prevEpisode.forEach(el => el.classList.remove('disabled'));
-                            nextEpisode.forEach(el => el.classList.remove('disabled'));
-                        }
-
-
-                        prevEpisode.forEach(el => {
-                            el.onclick = () => {
-                                if (currentIndex > 0) {
-                                    openEpisode(series, episodes[currentIndex - 1].id);
-                                }
-                            };
-                        });
-
-                        nextEpisode.forEach(el => {
-                            el.onclick = () => {
-                                if (currentIndex < episodes.length - 1) {
-                                    openEpisode(series, episodes[currentIndex + 1].id);
-                                }
-                            };
-                        });
-                    }
-                });
-
+            if (seriesId) {
                 hideSpinner();
-                episodeCardCollapse.show();
-                document.getElementById('episodeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                await loadSeriesList();
+                const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
+                    toggle: true
+                });
+            }
+        }
 
-                document.getElementById('seriesListIcon').classList.remove('bi-chevron-up');
-                document.getElementById('seriesListIcon').classList.add('bi-chevron-down');
-                const seriesListCollapse = new bootstrap.Collapse(document.getElementById('seriesList'), { toggle: false });
-                seriesListCollapse.hide()
+        window.previewCoverImage = function (input) {
+            const url = input.value;
+            try {
+                new URL(url);
+                document.getElementById('cover-placeholder').classList.add('collapse');
+                document.getElementById('cover-preview').src = url;
+                document.getElementById('cover-preview').classList.remove('collapse');
+
+            } catch (error) {
+                document.getElementById('cover-placeholder').classList.remove('collapse');
+                document.getElementById('cover-preview').classList.add('collapse');
+                document.getElementById('cover-preview').src = url;
+            }
+        }
+
+        window.editSeries = function (seriesId) {
+            const series = seriesList.find(s => s.id === seriesId);
+            if (series) {
+                var table = document.getElementById(`table-${seriesId}`);
+                for (var icon of table.getElementsByClassName('drag-icon')) {
+                    icon.classList.toggle('collapse');
+                }
+                for (var icon of table.getElementsByClassName('delete-icon')) {
+                    icon.classList.toggle('collapse');
+                }
+
+                newEpisode(seriesId);
+
+                var tfoot = table.getElementsByTagName('tfoot')[0];
+                tfoot.classList.toggle('collapse');
+
+                document.getElementById(`btn-edit-series-${seriesId}`).classList.add('collapse')
+                document.getElementById(`btn-close-edit-series-${seriesId}`).classList.toggle('collapse');
+                document.getElementById(`btn-save-series-${seriesId}`).classList.toggle('collapse');
+                document.getElementById(`btn-delete-series-${seriesId}`).classList.toggle('collapse');
+
+            } else {
+                console.error(`Series with ID ${seriesId} not found.`);
+            }
+        }
+
+        window.newEpisode = function (seriesId) {
+            if (seriesId == "new-series") {
+                var episodeList = document.getElementById('episode-list');
+                var newEpisodeItem = document.createElement('div');
+                newEpisodeItem.className = 'list-group-item d-flex align-items-center border-0 px-0 pt-0';
+                newEpisodeItem.innerHTML = `
+                <i class="bi bi-list pe-2 d-block col-auto handle"></i>
+                <div class="col">
+                    <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
+                    <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                        <input type="url" class="form-control" placeholder="번역글 링크"
+                            pattern="https://(gall\.dcinside\.com/mgallery/board/view/|m\.dcinside\.com/board/).*"
+                            title="URL은 https://gall.dcinside.com/mgallery/board/view/ 또는 https://m.dcinside.com/board/로 시작해야 합니다."
+                            onchange="getTitle(this)" required/>
+                    </div>
+                </div>
+                <i class="bi bi-trash ps-2 text-danger d-block col-auto" style="cursor: pointer;" onclick="removeRow(this)"></i>`;
+                episodeList.appendChild(newEpisodeItem);
+            } else {
+                var table = document.getElementById(`table-${seriesId}`);
+                var tbody = table.getElementsByTagName('tbody')[0];
+                var tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td class="text-center align-middle handle"><i class="bi bi-list"></i></td>
+                <td>
+                    <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
+                    <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                        <input type="url" class="form-control" placeholder="번역글 링크" 
+                            pattern="https://(gall\.dcinside\.com/mgallery/board/view/|m\.dcinside\.com/board/).*" 
+                            title="URL은 https://gall.dcinside.com/mgallery/board/view/ 또는 https://m.dcinside.com/board/로 시작해야 합니다."
+                            onchange="getTitle(this)" />
+                    </div>
+                </td>
+                <td class="d-none d-md-table-cell"></td>
+                <td class="text-center align-middle delete-icon">
+                    <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+                </td>
+            `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        window.removeRow = function (element) {
+            var row = element.closest('tr');
+            if (row) {
+                row.remove();
+            } else {
+                if (document.getElementById('episode-list').children.length > 1) {
+                    row = element.closest('.list-group-item');
+                    if (row) {
+                        row.remove();
+                    }
+                }
+            }
+        }
+
+        window.closeEdit = function (seriesId) {
+            loadEpisode(seriesId);
+        }
+
+        window.saveSeries = async function (seriesId) {
+            showSpinner();
+            const series = seriesList.find(s => s.id === seriesId);
+            var newEpisodes = [];
+            var tbody = document.getElementById(`table-${seriesId}`).getElementsByTagName('tbody')[0];
+            for (let tr of tbody.getElementsByTagName('tr')) {
+                if (tr.hasAttribute('data-id')) {
+                    let id = tr.getAttribute('data-id');
+                    series.episodes.forEach(ep => {
+                        if (ep.id == id) {
+                            newEpisodes.push(ep.toObject());
+                        }
+                    });
+                } else {
+                    let episodeInput = tr.querySelector('input[type="url"]');
+                    if (episodeInput.hasAttribute('data-episode')) {
+                        newEpisodes.push(JSON.parse(episodeInput.getAttribute('data-episode')));
+                    }
+                }
+            }
+
+            await firebaseDB.updateData(series.id, { episodes: newEpisodes });
+            hideSpinner();
+
+            await loadSeriesList();
+            const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
+                toggle: true
             });
         }
 
-        function hideSpinner() {
-            document.getElementById('spinner').classList.remove('d-flex');
-            document.getElementById('spinner').classList.add('d-none');
-        }
+        window.getTitle = async function (input) {
+            const url = input.value;
+            const match = url.match(/https:\/\/(gall\.dcinside\.com\/mgallery\/board\/view\/|m\.dcinside\.com\/board\/)/);
 
-        function showSpinner() {
-            document.getElementById('spinner').classList.remove('d-none');
-            document.getElementById('spinner').classList.add('d-flex');
-        }
+            if (match) {
+                var title = input.parentElement.parentElement.children[0];
+                var spinner = input.parentElement.parentElement.children[1]
 
-        function toggleSeriesList() {
-            const seriesListCollapse = new bootstrap.Collapse(document.getElementById('seriesList'), { toggle: false });
-            const seriesListIcon = document.getElementById('seriesListIcon');
+                title.firstChild.innerText = "불러오는 중...";
+                spinner.classList.remove('visually-hidden');
+                document.getElementById('save-new-series').disabled = true;
+                document.getElementById('btn-save-series').disabled = true;
 
-            if (seriesListCollapse._isShown()) {
-                seriesListCollapse.hide();
-                seriesListIcon.classList.remove('bi-chevron-up');
-                seriesListIcon.classList.add('bi-chevron-down');
-
-            } else {
-                seriesListCollapse.show();
-                seriesListIcon.classList.remove('bi-chevron-down');
-                seriesListIcon.classList.add('bi-chevron-up');
-            }
-        }
-
-        function openSeriesEditModal(series) {
-            document.getElementById('seriesEditModalLabel').innerText = series ? '시리즈 편집' : '새 시리즈 추가';
-
-            const seriesEditModal = document.getElementById('seriesEditModal');
-            const inputSeriesTitle = document.getElementById('input_series_title');
-            inputSeriesTitle.value = series;
-            inputSeriesTitle.disabled = !!series;
-
-            const episodes = result.find(item => item.series === series).episodes;
-            const episodeListReorder = document.getElementById('episode_list_reorder');
-            episodeListReorder.innerHTML = '';
-
-            for (const episode of episodes) {
-                addNewEpisode(episode);
-            }
-        }
-
-        function addNewEpisode(episode = null) {
-            const episodeListReorder = document.getElementById('episode_list_reorder');
-            const newEpisodeItem = document.createElement('div');
-            newEpisodeItem.className = 'list-group-item border-0 d-flex justify-content-between align-items-center px-0 py-1';
-            if (episode) {
-                newEpisodeItem.innerHTML = `
-                <i class="bi bi-chevron-expand me-2 handle"></i>
-                <div class="w-100"> 
-                    <span class="opacity-50"><small><i>${episode.episode}</i></small></span>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                        <input type="text" class="form-control" value="${dcController.generateURL(episode.id)}" />
-                        <button type="button" class="btn btn-danger" onclick='removeEpisode(this)'><i class="bi bi-trash"></i></button>
-                    </div>
-                </div>
-            `;
-            } else {
-                newEpisodeItem.innerHTML = `
-                <i class="bi bi-chevron-expand me-2 handle"></i>
-                <div class="w-100"> 
-                    <span class="opacity-50"><small><i></i></small></span>
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                        <input type="text" class="form-control" />
-                        <button type="button" class="btn btn-danger" onclick='removeEpisode(this)'><i class="bi bi-trash"></i></button>
-                    </div>
-                </div>
-            `;
-            }
-
-            episodeListReorder.appendChild(newEpisodeItem);
-        }
-
-        function removeEpisode(button) {
-            const episodeItem = button.closest('.list-group-item');
-            episodeItem.remove();
-        }
-
-        function saveSeries() {
-            const seriesTitle = document.getElementById('input_series_title').value;
-            const series = result.find(item => item.series === seriesTitle)
-
-            if (series) {
-                showSpinner();
-                const episodeItems = document.getElementById('episode_list_reorder').querySelectorAll('input[type="text"]');
-
-                if (episodeItems.length == 0) {
-                    alert('에피소드를 하나 이상 입력하세요.');
-                    hideSpinner();
-                    return;
-                } else {
-                    const seriesEditModal = document.getElementById('seriesEditModal');
-                    const modal = bootstrap.Modal.getInstance(seriesEditModal);
-                    if (!modal) {
-                        modal = new bootstrap.Modal(seriesEditModal);
-                    }
-                    modal.hide();
-
-                    dbController.updateEpisodes(series, episodeItems)
-                        .then(() => {
-                            loadData();
-                        });
+                const episode = await Episode.fromURL(url);
+                if (episode instanceof Episode) {
+                    title.firstChild.innerText = episode.title;
+                    spinner.classList.add('visually-hidden');
+                    input.setAttribute('data-episode', JSON.stringify(episode.toObject()));
+                    document.getElementById('save-new-series').disabled = false;
+                    document.getElementById('btn-save-series').disabled = false;
                 }
 
             }
         }
 
-
-
-        // document.getElementById('postBtn').addEventListener('click', () => {
-        //     const data = ['A', 'B', 'C'];
-        //     dbController.writeData(data)
-        // });
-
-        // dbController.fetchData('dcinside', '1663475').then(data => {
-        //     document.getElementById('title').innerText = data.title;
-        //     document.getElementById('content').innerHTML = data.content;
-        // });
+        window.deleteSeries = async function (seriesId) {
+            showSpinner();
+            await firebaseDB.deleteData(seriesId);
+            hideSpinner();
+            await loadSeriesList();
+        }
 
     </script>
 </body>

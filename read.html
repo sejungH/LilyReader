@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="./scripts/seriesController.js"></script>
+    <script src="./scripts/functions.js"></script>
+
+    <title>DCReader</title>
+
+    <style>
+        @font-face {
+            font-family: 'RIDIBatang';
+            src: url('../fonts/RIDIBatang.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        #episode-title,
+        #episode-content {
+            font-family: 'RIDIBatang', sans-serif;
+        }
+
+        #episode-content p {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body data-bs-theme="dark">
+    <nav class="navbar navbar-expand-md bg-primary-subtle">
+        <div class="container-md">
+            <a class="navbar-brand" href="/"><i class="bi bi-book-fill"></i> DC Reader</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
+                <form class="d-flex ms-auto" role="search">
+                    <input class="form-control me-2" type="search" placeholder="제목" aria-label="Search" />
+                    <button class="btn btn-outline-primary text-nowrap" type="submit">검색</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-md py-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">목록</a></li>
+                <li class="breadcrumb-item active w-75 text-truncate" aria-current="page" id="breadcrumb-title"></li>
+            </ol>
+        </nav>
+        <div class="accordion my-3" id="series-list"></div>
+        <div>
+            <div class="row py-3 border-bottom">
+                <div class="col-3">
+                    <button class="btn btn-sm btn-outline-light prev-episode">&lt; 이전화</button>
+                </div>
+                <div class="col-6">
+                </div>
+                <div class="col-3 text-end">
+                    <button class="btn btn-sm btn-outline-light next-episode">다음화 &gt;</button>
+                </div>
+            </div>
+            <div class="row my-3">
+                <h1 class="h4 fw-bold mb-5" id="episode-title"></h1>
+                <div id="episode-content"></div>
+            </div>
+            <div class="row py-3 border-top">
+                <div class="col-3">
+                    <button class="btn btn-sm btn-outline-light prev-episode">&lt; 이전화</button>
+                </div>
+                <div class="col-6">
+                </div>
+                <div class="col-3 text-end">
+                    <button class="btn btn-sm btn-outline-light next-episode">다음화 &gt;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="spinner" class="bg-dark bg-opacity-50 position-fixed top-0 bottom-0 start-0 end-0 z-5">
+        <div class="position-absolute top-50 start-50 translate-middle z-3">
+            <div class="d-flex justify-content-center my-3">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { FirebaseDB } from "./scripts/firebaseDB.mjs";
+
+        const firebaseDB = new FirebaseDB();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const seriesId = urlParams.get('series');
+        const episodeId = Number.parseInt(urlParams.get('episode'));
+
+        const seriesData = await firebaseDB.readDataById(seriesId);
+        const series = Series.fromDict(seriesData);
+        await loadSeries(series);
+        await init();
+
+        async function init() {
+            document.getElementById('breadcrumb-title').innerText = series.title;
+            for (let td of document.getElementById(`table-${seriesId}`).querySelector(`tr[data-id="${episodeId}"]`).children) {
+                td.classList.add('bg-primary')
+            }
+            const episode = series.episodes.find(ep => ep.id === episodeId);
+            const content = await episode.getContent();
+            document.getElementById('episode-title').innerText = episode.title;
+            document.getElementById('episode-content').innerHTML = content;
+
+            for (let btn of document.getElementsByClassName('prev-episode')) {
+                const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
+                if (episodeIndex > 0) {
+                    const prevEpisode = series.episodes[episodeIndex - 1];
+                    btn.addEventListener('click', () => {
+                        window.location.href = `read.html?series=${seriesId}&episode=${prevEpisode.id}`;
+                    });
+                } else {
+                    btn.classList.add('disabled');
+                }
+
+            }
+
+            for (let btn of document.getElementsByClassName('next-episode')) {
+                const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
+                if (episodeIndex < series.episodes.length - 1) {
+                    const nextEpisode = series.episodes[episodeIndex + 1];
+                    btn.addEventListener('click', () => {
+                        window.location.href = `read.html?series=${seriesId}&episode=${nextEpisode.id}`;
+                    });
+                } else {
+                    btn.classList.add('disabled');
+                }
+
+            }
+
+            hideSpinner();
+        }
+
+        window.editSeries = function (seriesId) {
+            var table = document.getElementById(`table-${seriesId}`);
+            for (var icon of table.getElementsByClassName('drag-icon')) {
+                icon.classList.toggle('collapse');
+            }
+            for (var icon of table.getElementsByClassName('delete-icon')) {
+                icon.classList.toggle('collapse');
+            }
+
+            newEpisode(seriesId);
+
+            var tfoot = table.getElementsByTagName('tfoot')[0];
+            tfoot.classList.toggle('collapse');
+
+            document.getElementById(`btn-edit-series-${seriesId}`).classList.add('collapse')
+            document.getElementById(`btn-close-edit-series-${seriesId}`).classList.toggle('collapse');
+            document.getElementById(`btn-save-series-${seriesId}`).classList.toggle('collapse');
+            document.getElementById(`btn-delete-series-${seriesId}`).classList.toggle('collapse');
+        }
+
+        window.newEpisode = function (seriesId) {
+            var table = document.getElementById(`table-${seriesId}`);
+            var tbody = table.getElementsByTagName('tbody')[0];
+            var tr = document.createElement('tr');
+            tr.innerHTML = `
+            <td class="text-center align-middle handle"><i class="bi bi-list"></i></td>
+            <td>
+                <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
+                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="url" class="form-control" placeholder="번역글 링크" 
+                        pattern="https://(gall\.dcinside\.com/mgallery/board/view/|m\.dcinside\.com/board/).*" 
+                        title="URL은 https://gall.dcinside.com/mgallery/board/view/ 또는 https://m.dcinside.com/board/로 시작해야 합니다."
+                        onchange="getTitle(this)" />
+                </div>
+            </td>
+            <td class="d-none d-md-table-cell"></td>
+            <td class="text-center align-middle delete-icon">
+                <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+            </td>`;
+            tbody.appendChild(tr);
+        }
+
+        window.removeRow = function (element) {
+            var row = element.closest('tr');
+            if (row) {
+                row.remove();
+            }
+        }
+
+        window.closeEdit = function (seriesId) {
+            loadEpisode(series);
+        }
+
+        window.saveSeries = async function (seriesId) {
+            showSpinner();
+            var newEpisodes = [];
+            var tbody = document.getElementById(`table-${seriesId}`).getElementsByTagName('tbody')[0];
+            for (let tr of tbody.getElementsByTagName('tr')) {
+                if (tr.hasAttribute('data-id')) {
+                    let id = tr.getAttribute('data-id');
+                    series.episodes.forEach(ep => {
+                        if (ep.id == id) {
+                            newEpisodes.push(ep.toObject());
+                        }
+                    });
+                } else {
+                    let episodeInput = tr.querySelector('input[type="url"]');
+                    if (episodeInput.hasAttribute('data-episode')) {
+                        newEpisodes.push(JSON.parse(episodeInput.getAttribute('data-episode')));
+                    }
+                }
+            }
+
+            await firebaseDB.updateData(series.id, { episodes: newEpisodes });
+            hideSpinner();
+
+            await loadSeries(series);
+            const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
+                toggle: true
+            });
+        }
+
+        window.getTitle = async function (input) {
+            const url = input.value;
+            const match = url.match(/https:\/\/(gall\.dcinside\.com\/mgallery\/board\/view\/|m\.dcinside\.com\/board\/)/);
+
+            if (match) {
+                var title = input.parentElement.parentElement.children[0];
+                var spinner = input.parentElement.parentElement.children[1]
+
+                title.firstChild.innerText = "불러오는 중...";
+                spinner.classList.remove('visually-hidden');
+                document.getElementById('save-new-series').disabled = true;
+                document.getElementById('btn-save-series').disabled = true;
+
+                const episode = await Episode.fromURL(url);
+                if (episode instanceof Episode) {
+                    title.firstChild.innerText = episode.title;
+                    spinner.classList.add('visually-hidden');
+                    input.setAttribute('data-episode', JSON.stringify(episode.toObject()));
+                    document.getElementById('save-new-series').disabled = false;
+                    document.getElementById('btn-save-series').disabled = false;
+                }
+
+            }
+        }
+
+        window.deleteSeries = async function (seriesId) {
+            showSpinner();
+            await firebaseDB.deleteData(seriesId);
+            hideSpinner();
+            await loadSeries(series);
+        }
+
+    </script>
+</body>
+
+</html>

@@ -1,22 +1,9 @@
-// Firebase SDK import
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
 const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx-CuaEhQaqMbQ9CYIpX_K14UmkkjdLya0ik8JiX7LUYVRoizowaU6fq0JAlkBzxdE-/exec";
-const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyA4ytSbKyzAfnTNNw3cKRN9VOCW6ORPPBY",
-    authDomain: "dcreader-project.firebaseapp.com",
-    projectId: "dcreader-project",
-    storageBucket: "dcreader-project.firebasestorage.app",
-    messagingSenderId: "612017471498",
-    appId: "1:612017471498:web:b46b8b23074e0b1a065ff3",
-    measurementId: "G-GP8PTD3TLS"
-};
 
 class Series {
     /**
      * 시리즈를 나타내는 클래스입니다.
-     * @param {Number} id 
+     * @param {String} id 
      * @param {String} title 
      * @param {String} cover 
      * @param {Array<Episode>} episodes 
@@ -29,6 +16,19 @@ class Series {
     }
 
     /**
+     * 시리즈 객체를 생성합니다.
+     * @param {Object} data 
+     */
+    static fromDict(data) {
+        let episodes = [];
+        for (const episodeData of data.episodes) {
+            episodes.push(Episode.fromDict(episodeData));
+        }
+
+        return new Series(data.id, data.title, data.cover, episodes);
+    }
+
+    /**
      * 에피소드를 추가합니다.
      * @param {Episode} episode 
      */
@@ -38,7 +38,7 @@ class Series {
 
     /**
      * 에피소드를 제거합니다.
-     * @param {Number} episodeId 
+     * @param {Number} id 
      */
     removeBook(id) {
         this.episodes = this.episodes.filter(episodes => episodes.id !== id);
@@ -49,8 +49,16 @@ class Series {
      * @param {Number} id 
      * @returns {Episode|null}
      */
-    getBookById(id) {
-        return this.episodes.find(book => book.id === id);
+    getEpisodeById(id) {
+        return this.episodes.find(episode => episode.id === id);
+    }
+
+    toObject() {
+        return {
+            title: this.title,
+            cover: this.cover,
+            episodes: this.episodes.map(episode => episode.toObject())
+        }
     }
 }
 
@@ -67,12 +75,88 @@ class Episode {
         this.datetime = datetime;
     }
 
-    static fromURL(url) {
-        return new Episode(Episode.extractIDFromURL(url), Episode.getTitleFromURL(url), new Date());
+    /**
+     * 에피소드 객체를 생성합니다.
+     * @param {Object} data 
+     * @returns {Episode}
+     */
+    static fromDict(data) {
+        return new Episode(data.id, data.title, new Date(data.datetime));
     }
 
-    getURL() {
-        return `https://gall.dcinside.com/mgallery/board/view/?id=lilyfever&no=${this.id}`;
+    /**
+     * URL에서 에피소드 객체를 생성합니다.
+     * @param {String} url 
+     * @returns {Episode|Error}
+     */
+    static async fromURL(url) {
+        try {
+            const id = Episode.extractIDFromURL(url);
+            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`);
+            const html = await response.text();
+
+            if (html) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const title = doc.querySelector('title').textContent.replaceAll('- 대세는 백합 마이너 갤러리', '').trim();
+                const dateString = doc.querySelector('.gall_date').getAttribute('title').replaceAll(' ', 'T');
+
+                const date = new Date(dateString);
+                return new Episode(id, title, date);
+
+            } else {
+                throw new Error("Fetching URL has failed");
+            }
+
+        } catch (error) {
+            console.error("Error fetching title from URL:", error);
+            return error;
+        }
+    }
+
+    /**
+     * 에피소드의 내용을 가져옵니다.
+     * @returns {String}
+     */
+    async getContent() {
+        try {
+            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${this.id}`);
+            const html = await response.text();
+
+            if (html) {
+                console.log(`https://m.dcinside.com/board/lilyfever/${this.id}`);
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                let content = doc.querySelector('.write_div');
+                content = Episode.trimContent(content);
+                return content.innerHTML;
+
+            } else {
+                throw new Error("Fetching URL has failed");
+            }
+
+        } catch (error) {
+            console.error("Error fetching Content from URL:", error);
+            return error;
+        }
+    }
+
+    static trimContent(content) {
+        content.querySelectorAll('div').forEach(node => node.remove());
+
+        const paragraphs = Array.from(content.querySelectorAll('p'));
+
+        while (paragraphs.length > 0 && !paragraphs[0].textContent.trim()) {
+            paragraphs[0].remove();
+            paragraphs.shift();
+        }
+
+        while (paragraphs.length > 0 && !paragraphs[paragraphs.length - 1].textContent.trim()) {
+            paragraphs[paragraphs.length - 1].remove();
+            paragraphs.pop();
+        }
+
+        return content;
     }
 
     /**
@@ -91,68 +175,18 @@ class Episode {
     }
 
     /**
-     * URL에서 에피소드 제목을 추출합니다.
-     * @param {String} url 
+     * 에피소드의 URL을 반환합니다.
      * @returns {String}
      */
-    static async getTitleFromURL(url) {
-        try {
-            const response = await fetch(WEBAPP_URL, {
-                redirect: "follow",
-                method: "POST",
-                body: JSON.stringify({ url: url }),
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8",
-                },
-            });
-            const data = await response.json();
-            if (data) {
-                console.log(data);
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(data.data.html, 'text/html');
-                const title = doc.querySelector('title').textContent;
-
-                return title;
-
-            } else {
-                throw new Error("Fetching URL has failed");
-            }
-        } catch (error) {
-            console.error("Error fetching title from URL:", error);
-            return null;
-        }
-    }
-}
-
-class FirebaseDB {
-
-    constructor() {
-        this.app = initializeApp(FIREBASE_CONFIG);
-        this.db = getFirestore(app);
+    getURL() {
+        return `https://gall.dcinside.com/mgallery/board/view/?id=lilyfever&no=${this.id}`;
     }
 
-    /** 
-     *  
-     * @param {String} query 
-     * @returns {Promise<Object>}
-     */
-    static async readData(query = null) {
-        const data = await getDocs(collection(this.db, "series"));
-        return data;
+    toObject() {
+        return {
+            id: this.id,
+            title: this.title,
+            datetime: this.datetime.toISOString()
+        };
     }
-
-
-    /**
-     * 
-     * @param {*} doc 
-     */
-    static async writeData(doc) {
-        try {
-            const docRef = await addDoc(collection(this.db, "series"), doc);
-            console.log("Document written with ID: ", docRef.id);
-        } catch (error) {
-            console.error("Error adding document: ", error);
-        }
-    }
-
 }
