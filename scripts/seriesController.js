@@ -128,6 +128,9 @@ class Episode {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 let content = doc.querySelector('.write_div');
+                if (!content) {
+                    content = doc.querySelector('.thum-txtin');
+                }
                 content = Episode.trimContent(content);
                 return content.innerHTML;
 

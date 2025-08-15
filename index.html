@@ -14,13 +14,13 @@
     <script src="./scripts/seriesController.js"></script>
     <script src="./scripts/functions.js"></script>
 
-    <title>DCReader</title>
+    <title>LilyReader</title>
 </head>
 
 <body data-bs-theme="dark">
     <nav class="navbar navbar-expand-md bg-primary-subtle">
         <div class="container-md">
-            <a class="navbar-brand" href="/"><i class="bi bi-book-fill"></i> DC Reader</a>
+            <a class="navbar-brand" href="/"><i class="bi bi-book-fill"></i> Lily Reader</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation">
@@ -104,13 +104,25 @@
         const firebaseDB = new FirebaseDB();
 
         var seriesList = [];
-        loadSeriesList(firebaseDB);
+        init();
 
         new Sortable(document.getElementById(`episode-list`), {
             handle: '.handle',
             animation: 150,
             ghostClass: 'blue-background-class',
         });
+
+        async function init() {
+            document.getElementById('series-list').innerHTML = '';
+            const data = await firebaseDB.readData();
+            hideSpinner();
+            seriesList = [];
+            data.forEach(d => seriesList.push(Series.fromDict(d)));
+
+            for (const series of seriesList) {
+                loadSeries(series);
+            }
+        }
 
         window.addNewSeries = function () {
             document.getElementById('episode-list').innerHTML = '';
@@ -148,7 +160,7 @@
 
             if (seriesId) {
                 hideSpinner();
-                await loadSeriesList();
+                await init();
                 const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
                     toggle: true
                 });
@@ -191,6 +203,10 @@
                 document.getElementById(`btn-save-series-${seriesId}`).classList.toggle('collapse');
                 document.getElementById(`btn-delete-series-${seriesId}`).classList.toggle('collapse');
 
+                table.querySelectorAll('tbody tr').forEach(tr => {
+                    tr.removeAttribute('onclick');
+                });
+
             } else {
                 console.error(`Series with ID ${seriesId} not found.`);
             }
@@ -209,13 +225,14 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
                         <input type="url" class="form-control" placeholder="번역글 링크"
-                            pattern="https://(gall\.dcinside\.com/mgallery/board/view/|m\.dcinside\.com/board/).*"
-                            title="URL은 https://gall.dcinside.com/mgallery/board/view/ 또는 https://m.dcinside.com/board/로 시작해야 합니다."
+                            pattern="https://(gall\.dcinside\.com/mgallery/board/view|m\.dcinside\.com/board/).*"
+                            title="URL은 https://gall.dcinside.com/mgallery/board/view 또는 https://m.dcinside.com/board/로 시작해야 합니다."
                             onchange="getTitle(this)" required/>
                     </div>
                 </div>
                 <i class="bi bi-trash ps-2 text-danger d-block col-auto" style="cursor: pointer;" onclick="removeRow(this)"></i>`;
                 episodeList.appendChild(newEpisodeItem);
+
             } else {
                 var table = document.getElementById(`table-${seriesId}`);
                 var tbody = table.getElementsByTagName('tbody')[0];
@@ -228,9 +245,9 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
                         <input type="url" class="form-control" placeholder="번역글 링크" 
-                            pattern="https://(gall\.dcinside\.com/mgallery/board/view/|m\.dcinside\.com/board/).*" 
-                            title="URL은 https://gall.dcinside.com/mgallery/board/view/ 또는 https://m.dcinside.com/board/로 시작해야 합니다."
-                            onchange="getTitle(this)" />
+                            pattern="https://(gall\.dcinside\.com/mgallery/board/view|m\.dcinside\.com/board/).*" 
+                            title="URL은 https://gall.dcinside.com/mgallery/board/view 또는 https://m.dcinside.com/board/로 시작해야 합니다."
+                            onchange="getTitle(this, '${seriesId}')" />
                     </div>
                 </td>
                 <td class="d-none d-md-table-cell"></td>
@@ -267,12 +284,9 @@
             var tbody = document.getElementById(`table-${seriesId}`).getElementsByTagName('tbody')[0];
             for (let tr of tbody.getElementsByTagName('tr')) {
                 if (tr.hasAttribute('data-id')) {
-                    let id = tr.getAttribute('data-id');
-                    series.episodes.forEach(ep => {
-                        if (ep.id == id) {
-                            newEpisodes.push(ep.toObject());
-                        }
-                    });
+                    let id = Number.parseInt(tr.getAttribute('data-id'));
+                    let episode = series.episodes.find(ep => ep.id == id)
+                    newEpisodes.push(episode.toObject());
                 } else {
                     let episodeInput = tr.querySelector('input[type="url"]');
                     if (episodeInput.hasAttribute('data-episode')) {
@@ -284,15 +298,15 @@
             await firebaseDB.updateData(series.id, { episodes: newEpisodes });
             hideSpinner();
 
-            await loadSeriesList();
+            await init();
             const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
                 toggle: true
             });
         }
 
-        window.getTitle = async function (input) {
+        window.getTitle = async function (input, seriesId = null) {
             const url = input.value;
-            const match = url.match(/https:\/\/(gall\.dcinside\.com\/mgallery\/board\/view\/|m\.dcinside\.com\/board\/)/);
+            const match = url.match(/https:\/\/(gall\.dcinside\.com\/mgallery\/board\/view|m\.dcinside\.com\/board\/)/);
 
             if (match) {
                 var title = input.parentElement.parentElement.children[0];
@@ -300,16 +314,24 @@
 
                 title.firstChild.innerText = "불러오는 중...";
                 spinner.classList.remove('visually-hidden');
+
                 document.getElementById('save-new-series').disabled = true;
-                document.getElementById('btn-save-series').disabled = true;
+                if (seriesId) {
+                    document.getElementById(`btn-save-series-${seriesId}`).disabled = true;
+                } else {
+                    document.getElementById('save-new-series').disabled = true;
+                }
 
                 const episode = await Episode.fromURL(url);
                 if (episode instanceof Episode) {
                     title.firstChild.innerText = episode.title;
                     spinner.classList.add('visually-hidden');
                     input.setAttribute('data-episode', JSON.stringify(episode.toObject()));
-                    document.getElementById('save-new-series').disabled = false;
-                    document.getElementById('btn-save-series').disabled = false;
+                    if (seriesId) {
+                        document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
+                    } else {
+                        document.getElementById('save-new-series').disabled = false;
+                    }
                 }
 
             }
@@ -319,7 +341,7 @@
             showSpinner();
             await firebaseDB.deleteData(seriesId);
             hideSpinner();
-            await loadSeriesList();
+            await init();
         }
 
     </script>

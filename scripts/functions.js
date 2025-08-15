@@ -1,15 +1,3 @@
-async function loadSeriesList(firebaseDB) {
-    document.getElementById('series-list').innerHTML = '';
-    const data = await firebaseDB.readData();
-    hideSpinner();
-    seriesList = [];
-    data.forEach(d => seriesList.push(Series.fromDict(d)));
-
-    for (const series of seriesList) {
-        loadSeries(series);
-    }
-}
-
 function loadSeries(series) {
     const seriesElement = document.createElement('div');
     seriesElement.id = `series-${series.id}`;
