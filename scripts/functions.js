@@ -1,3 +1,13 @@
+function initNav() {
+    fetch('/nav.html')
+        .then(response => response.text())
+        .then(html => {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            document.body.prepend(temp);
+        });
+}
+
 function loadSeries(series) {
     const seriesElement = document.createElement('div');
     seriesElement.id = `series-${series.id}`;

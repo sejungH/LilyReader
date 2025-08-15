@@ -14,7 +14,7 @@
     <script src="./scripts/seriesController.js"></script>
     <script src="./scripts/functions.js"></script>
 
-    <title> - LilyReader</title>
+    <title></title>
 
     <style>
         @font-face {
@@ -31,28 +31,16 @@
 
         #episode-content p {
             margin: 0;
-            text-indent: 1rem;
+        }
+
+        #episode-content img {
+            max-width: 100%;
+            margin: 1rem 0;
         }
     </style>
 </head>
 
 <body data-bs-theme="dark">
-    <nav class="navbar navbar-expand-md bg-primary-subtle">
-        <div class="container-md">
-            <a class="navbar-brand" href="/"><i class="bi bi-book-fill"></i> Lily Reader</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
-                <form class="d-flex ms-auto" role="search">
-                    <input class="form-control me-2" type="search" placeholder="제목" aria-label="Search" />
-                    <button class="btn btn-outline-primary text-nowrap" type="submit">검색</button>
-                </form>
-            </div>
-        </div>
-    </nav>
 
     <div class="container-md py-3">
         <nav aria-label="breadcrumb">
@@ -107,21 +95,33 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         const seriesId = urlParams.get('series');
-        const episodeId = Number.parseInt(urlParams.get('episode'));
+        var episodeId;
+        var series;
 
-        const seriesData = await firebaseDB.readDataById(seriesId);
-        const series = Series.fromDict(seriesData);
-        await loadSeries(series);
-        await init();
+        initNav();
+        init();
 
         async function init() {
+            document.getElementById('series-list').innerHTML = '';
+            const seriesData = await firebaseDB.readDataById(seriesId);
+            series = Series.fromDict(seriesData);
+
+            if (urlParams.has('episode')) {
+                episodeId = Number.parseInt(urlParams.get('episode'));
+            } else {
+                episodeId = series.episodes[0].id;
+            }
+
+            await loadSeries(series);
+
             document.getElementById('breadcrumb-title').innerText = series.title;
             for (let td of document.getElementById(`table-${seriesId}`).querySelector(`tr[data-id="${episodeId}"]`).children) {
                 td.classList.add('bg-primary')
             }
             const episode = series.episodes.find(ep => ep.id === episodeId);
             const content = await episode.getContent();
-            document.getElementById('episode-title').innerText = episode.title;
+            document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
+            document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${episode.getURL()}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
             document.getElementById('episode-content').innerHTML = content;
 
             for (let btn of document.getElementsByClassName('prev-episode')) {
@@ -151,6 +151,23 @@
             }
 
             hideSpinner();
+        }
+
+        window.showSuggestions = async function (value) {
+            const data = await firebaseDB.readData();
+            const suggestions = data.filter(series => series.title.includes(value)).slice(0, 10);
+            const list = document.getElementById('autocomplete-list');
+            list.innerHTML = '';
+            suggestions.forEach(series => {
+                const item = document.createElement('li');
+                item.innerHTML = `<a href='/read.html?series=${series.id}' class='dropdown-item text-wrap'><small>${series.title}</small></a>`;
+                list.appendChild(item);
+            });
+            if (value && suggestions.length > 0) {
+                list.classList.add('show');
+            } else {
+                list.classList.remove('show');
+            }
         }
 
         window.editSeries = function (seriesId) {
@@ -231,10 +248,11 @@
             await firebaseDB.updateData(series.id, { episodes: newEpisodes });
             hideSpinner();
 
-            await loadSeries(series);
+            await init();
             const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
-                toggle: true
+                toggle: false // 초기 상태를 유지
             });
+            bsCollapse.show(); // 강제로 아코디언 열기
         }
 
         window.getTitle = async function (input) {
@@ -247,16 +265,14 @@
 
                 title.firstChild.innerText = "불러오는 중...";
                 spinner.classList.remove('visually-hidden');
-                document.getElementById('save-new-series').disabled = true;
-                document.getElementById('btn-save-series').disabled = true;
+                document.getElementById(`btn-save-series-${seriesId}`).disabled = true;
 
                 const episode = await Episode.fromURL(url);
                 if (episode instanceof Episode) {
                     title.firstChild.innerText = episode.title;
                     spinner.classList.add('visually-hidden');
                     input.setAttribute('data-episode', JSON.stringify(episode.toObject()));
-                    document.getElementById('save-new-series').disabled = false;
-                    document.getElementById('btn-save-series').disabled = false;
+                    document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
                 }
 
             }
@@ -266,7 +282,7 @@
             showSpinner();
             await firebaseDB.deleteData(seriesId);
             hideSpinner();
-            await loadSeries(series);
+            await init();
         }
 
     </script>

@@ -131,7 +131,7 @@ class Episode {
                 if (!content) {
                     content = doc.querySelector('.thum-txtin');
                 }
-                content = Episode.trimContent(content);
+                content = Episode.cleanUpContent(content);
                 return content.innerHTML;
 
             } else {
@@ -144,10 +144,10 @@ class Episode {
         }
     }
 
-    static trimContent(content) {
-        content.querySelectorAll('div').forEach(node => node.remove());
+    static cleanUpContent(html) {
+        // html.querySelectorAll('div').forEach(node => node.remove());
 
-        const paragraphs = Array.from(content.querySelectorAll('p'));
+        const paragraphs = Array.from(html.querySelectorAll('p'));
 
         while (paragraphs.length > 0 && !paragraphs[0].textContent.trim()) {
             paragraphs[0].remove();
@@ -159,7 +159,16 @@ class Episode {
             paragraphs.pop();
         }
 
-        return content;
+        for (const p of paragraphs) {
+            p.querySelectorAll('span[style]').forEach(span => {
+                span.removeAttribute('style');
+            });
+        }
+
+        let temp = document.createElement('div');
+        temp.innerHTML = paragraphs.map(p => p.outerHTML).join('\n');
+
+        return temp;
     }
 
     /**
