@@ -149,12 +149,12 @@ class Episode {
 
         const paragraphs = Array.from(html.querySelectorAll('p'));
 
-        while (paragraphs.length > 0 && !paragraphs[0].textContent.trim()) {
+        while (paragraphs.length > 0 && (paragraphs[0].innerHTML == '<br>' || paragraphs[0].innerHTML == '')) {
             paragraphs[0].remove();
             paragraphs.shift();
         }
 
-        while (paragraphs.length > 0 && !paragraphs[paragraphs.length - 1].textContent.trim()) {
+        while (paragraphs.length > 0 && (paragraphs[paragraphs.length - 1].innerHTML == '<br>' || paragraphs[paragraphs.length - 1].innerHTML == '')) {
             paragraphs[paragraphs.length - 1].remove();
             paragraphs.pop();
         }
@@ -163,6 +163,21 @@ class Episode {
             p.querySelectorAll('span[style]').forEach(span => {
                 span.removeAttribute('style');
             });
+        }
+
+        const images = html.querySelectorAll('img');
+        for (const img of images) {
+            img.removeAttribute('style');
+            img.removeAttribute('class');
+            img.removeAttribute('data-*');
+            img.removeAttribute('onclick');
+            img.removeAttribute('onerror');
+            img.removeAttribute('loading');
+
+            if (img.hasAttribute('data-original')) {
+                img.setAttribute('src', img.getAttribute('data-original'));
+                img.removeAttribute('data-original');
+            }
         }
 
         let temp = document.createElement('div');
