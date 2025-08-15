@@ -135,7 +135,7 @@
             list.innerHTML = '';
             suggestions.forEach(series => {
                 const item = document.createElement('li');
-                item.innerHTML = `<a href='/read.html?series=${series.id}' class='dropdown-item text-wrap'><small>${series.title}</small></a>`;
+                item.innerHTML = `<a href='read.html?series=${series.id}' class='dropdown-item text-wrap'><small>${series.title}</small></a>`;
                 list.appendChild(item);
             });
             if (value && suggestions.length > 0) {
