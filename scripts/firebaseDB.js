@@ -1,7 +1,4 @@
 // Firebase SDK import
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-
 const FIREBASE_CONFIG = {
     apiKey: "AIzaSyA4ytSbKyzAfnTNNw3cKRN9VOCW6ORPPBY",
     authDomain: "dcreader-project.firebaseapp.com",
@@ -12,14 +9,14 @@ const FIREBASE_CONFIG = {
     measurementId: "G-GP8PTD3TLS"
 };
 
-export class FirebaseDB {
+class FirebaseDB {
 
     /**
      * FirebaseDB 생성자
      */
     constructor() {
-        this.app = initializeApp(FIREBASE_CONFIG);
-        this.db = getFirestore(this.app);
+        this.app = firebase.initializeApp(FIREBASE_CONFIG);
+        this.db = firebase.firestore();
     }
 
     /** 
@@ -27,8 +24,8 @@ export class FirebaseDB {
      * @returns {Promise<Array>}
      */
     async readData() {
-        const data = await getDocs(collection(this.db, "series"));
-        return data.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const docSnap = await this.db.collection("series").get();
+        return docSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
     /**
@@ -38,10 +35,10 @@ export class FirebaseDB {
      */
     async readDataById(docId) {
         try {
-            const docRef = doc(this.db, "series", docId);
-            const docSnap = await getDoc(docRef);
+            const docRef = this.db.collection("series").doc(docId);
+            const docSnap = await docRef.get();
 
-            if (docSnap.exists()) {
+            if (docSnap) {
                 console.log("Document data:", docSnap.data());
                 return { id: docSnap.id, ...docSnap.data() };
             } else {
@@ -79,8 +76,8 @@ export class FirebaseDB {
      */
     async updateData(docId, updatedFields) {
         try {
-            const docRef = doc(this.db, "series", docId);
-            await updateDoc(docRef, updatedFields);
+            const docRef = this.db.collection("series").doc(docId);
+            await docRef.update(updatedFields);
             console.log("Document updated with ID: ", docId);
         } catch (error) {
             console.error("Error updating document: ", error);
@@ -93,8 +90,8 @@ export class FirebaseDB {
      */
     async deleteData(docId) {
         try {
-            const docRef = doc(this.db, "series", docId);
-            await deleteDoc(docRef);
+            const docRef = this.db.collection("series").doc(docId);
+            await docRef.delete();
             console.log("Document deleted with ID: ", docId);
 
         } catch (error) {

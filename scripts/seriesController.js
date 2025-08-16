@@ -1,4 +1,4 @@
-export class Series {
+class Series {
     /**
      * 시리즈를 나타내는 클래스입니다.
      * @param {String} id 
@@ -60,7 +60,7 @@ export class Series {
     }
 }
 
-export class Episode {
+class Episode {
     /**
      * 에피소드를 나타내는 클래스입니다.
      * @param {Number} id 
@@ -148,7 +148,7 @@ export class Episode {
                 if (doc.querySelector('.nickname')) {
                     writer = doc.querySelector('.nickname').title;
                 } else {
-                    writer = doc.querySelector('.ginfo').querySelectorAll('li')[0].firstChild.textContent;
+                    writer = doc.querySelector('.ginfo2').querySelectorAll('li')[0].firstChild.textContent;
                 }
 
                 return { content: content.innerHTML, writer: writer };
