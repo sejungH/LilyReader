@@ -150,7 +150,13 @@
             const data = await firebaseDB.readData();
             hideSpinner();
             seriesList = [];
-            data.forEach(d => seriesList.push(Series.fromDict(d)));
+            data.forEach(d => {
+                let episodes = [];
+                for (const episodeData of d.episodes) {
+                    episodes.push(Episode.fromDict(episodeData));
+                }
+                seriesList.push(new Series(d.id, d.title, d.cover, episodes));
+            });
             sortSeries('datetime', false);
 
             for (const series of seriesList) {
