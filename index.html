@@ -222,7 +222,8 @@
 
             var newEpisodes = [];
             for (var ep of document.getElementById('episode-list').querySelectorAll('input[type="url"]')) {
-                newEpisodes.push(JSON.parse(ep.getAttribute('data-episode')));
+                let json = JSON.parse(ep.getAttribute('data-episode'));
+                newEpisodes.push({ id: json.id, title: json.title, datetime: new Date(json.datetime) });
             }
 
             var seriesId = await firebaseDB.writeData({ title: title, cover: cover, episodes: newEpisodes });

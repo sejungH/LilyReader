@@ -59,7 +59,8 @@ class FirebaseDB {
      */
     async writeData(doc) {
         try {
-            const docRef = await addDoc(collection(this.db, "series"), doc);
+            const docRef = this.db.collection("series").doc();
+            await docRef.set(doc);
             console.log("Document written with ID: ", docRef.id);
             return docRef.id;
 
