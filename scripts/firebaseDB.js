@@ -100,3 +100,5 @@ class FirebaseDB {
     }
 
 }
+
+window.FirebaseDB = FirebaseDB;

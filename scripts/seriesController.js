@@ -242,3 +242,6 @@ class Episode {
         };
     }
 }
+
+window.Series = Series;
+window.Episode = Episode;
