@@ -1,6 +1,4 @@
-const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx-CuaEhQaqMbQ9CYIpX_K14UmkkjdLya0ik8JiX7LUYVRoizowaU6fq0JAlkBzxdE-/exec";
-
-class Series {
+export class Series {
     /**
      * 시리즈를 나타내는 클래스입니다.
      * @param {String} id 
@@ -62,7 +60,7 @@ class Series {
     }
 }
 
-class Episode {
+export class Episode {
     /**
      * 에피소드를 나타내는 클래스입니다.
      * @param {Number} id 
