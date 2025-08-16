@@ -14,7 +14,7 @@ function loadSeries(series) {
                     <div class="lead fw-bold mb-2">${series.title}</div>
                     <div><span class="badge bg-primary mb-2">총 에피소드</span> <span id="episode-count-${series.id}"
                             class="badge">${series.episodes.length}</span></div>
-                    <div><span class="badge bg-primary">업데이트</span> <span id="status-${series.id}"
+                    <div><span class="badge bg-primary">최근 업데이트</span> <span id="status-${series.id}"
                             class="badge">${series.episodes[series.episodes.length - 1].datetime.toISOString().split('T')[0]}</span></div>
                 </div>
             </div>
@@ -49,7 +49,7 @@ function loadEpisode(series) {
                 <tr>
                     <th class="collapse drag-icon" width='30'></th>
                     <th><small>에피소드</small></th>
-                    <th class="d-none d-md-table-cell" width='110'><small>최근 업데이트</small></th>
+                    <th class="d-none d-md-table-cell text-center" width='100'><small>작성일</small></th>
                     <th class="collapse delete-icon" width='30'></th>
                 </tr>
             </thead>
@@ -58,7 +58,7 @@ function loadEpisode(series) {
                 <tr data-id="${episode.id}" style="cursor: pointer;" onclick="location.href='read?series=${series.id}&episode=${episode.id}'">
                     <td class="text-center align-middle collapse drag-icon handle"><i class="bi bi-list"></i></td>
                     <td><small>${episode.title}</small></td>
-                    <td class="d-none d-md-table-cell"><small>${episode.datetime.toISOString().split('T')[0]}</small></td>
+                    <td class="d-none d-md-table-cell text-center"><small>${episode.datetime.toISOString().split('T')[0]}</small></td>
                     <td class="text-center align-middle collapse delete-icon">
                         <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
                     </td>

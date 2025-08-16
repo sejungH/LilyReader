@@ -40,8 +40,37 @@
     </nav>
 
     <div class="container-md">
-        <div class="d-flex">
-            <button class="btn btn-sm btn-primary mt-3 ms-auto" onclick="addNewSeries()"><i
+        <div class="d-flex mt-3">
+            <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                aria-expanded="false">정렬</button>
+            <span class="border border-secondary rounded-pill py-1 px-3 ms-2"><small id="current-sort"></small></span>
+            <ul class="dropdown-menu" id="sortby">
+                <li>
+                    <button class="dropdown-item" type="button" onclick="sortSeries('datetime', true); reloadSeries();"
+                        data-sortby="datetime-asc">
+                        <small>최근 업데이트 <i class="bi bi-sort-down-alt"></i></small>
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" type="button" onclick="sortSeries('datetime', false); reloadSeries();"
+                        data-sortby="datetime-desc">
+                        <small>최근 업데이트 <i class="bi bi-sort-down"></i></small>
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" type="button" onclick="sortSeries('abc', true); reloadSeries();"
+                        data-sortby="abc-asc">
+                        <small>가나다 <i class="bi bi-sort-down-alt"></i></small>
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item" type="button" onclick="sortSeries('abc', false); reloadSeries();"
+                        data-sortby="abc-desc">
+                        <small>가나다 <i class="bi bi-sort-down"></i></small>
+                    </button>
+                </li>
+            </ul>
+            <button class="btn btn-sm btn-primary ms-auto" onclick="addNewSeries()"><i
                     class="bi bi-plus-circle-fill"></i> 새 시리즈 추가</button>
         </div>
         <div class="accordion my-3" id="series-list"></div>
@@ -116,6 +145,7 @@
             hideSpinner();
             seriesList = [];
             data.forEach(d => seriesList.push(Series.fromDict(d)));
+            sortSeries('datetime', false);
 
             for (const series of seriesList) {
                 loadSeries(series);
@@ -126,6 +156,30 @@
                 animation: 150,
                 ghostClass: 'blue-background-class',
             });
+        }
+
+        window.reloadSeries = function () {
+            document.getElementById('series-list').innerHTML = '';
+            for (const series of seriesList) {
+                loadSeries(series);
+            }
+        }
+
+        window.sortSeries = function (sortBy, asc = true) {
+            if (sortBy == 'datetime') {
+                seriesList.sort((a, b) => {
+                    const dateA = new Date(a.episodes[a.episodes.length - 1].datetime);
+                    const dateB = new Date(b.episodes[b.episodes.length - 1].datetime);
+                    return asc ? dateA - dateB : dateB - dateA;
+                });
+            } else if (sortBy == 'abc') {
+                seriesList.sort((a, b) => {
+                    return asc ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
+                });
+            }
+            document.querySelectorAll(`button[data-sortby]`).forEach(btn => { btn.classList.remove('active') });
+            document.querySelector(`button[data-sortby="${sortBy}-${asc ? 'asc' : 'desc'}"]`).classList.add('active');
+            document.getElementById('current-sort').innerHTML = document.querySelector(`button[data-sortby="${sortBy}-${asc ? 'asc' : 'desc'}"]`).innerHTML;
         }
 
         window.showSuggestions = async function (value) {
@@ -181,9 +235,15 @@
             if (seriesId) {
                 hideSpinner();
                 await init();
+
                 const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
-                    toggle: true
+                    toggle: false
                 });
+                bsCollapse.show();
+                
+                setTimeout(() => {
+                    document.getElementById(`series-${seriesId}`).scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 300);
             }
         }
 

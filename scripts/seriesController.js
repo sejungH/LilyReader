@@ -132,7 +132,8 @@ class Episode {
                     content = doc.querySelector('.thum-txtin');
                 }
                 content = Episode.cleanUpContent(content);
-                return content.innerHTML;
+
+                return {content: content.innerHTML, writer: doc.querySelector('.nickname').title };
 
             } else {
                 throw new Error("Fetching URL has failed");
@@ -144,10 +145,10 @@ class Episode {
         }
     }
 
-    static cleanUpContent(html) {
+    static cleanUpContent(doc) {
         // html.querySelectorAll('div').forEach(node => node.remove());
 
-        const paragraphs = Array.from(html.querySelectorAll('p'));
+        const paragraphs = Array.from(doc.querySelectorAll('p, div'));
 
         while (paragraphs.length > 0 && (paragraphs[0].innerHTML == '<br>' || paragraphs[0].innerHTML == '')) {
             paragraphs[0].remove();
@@ -165,7 +166,7 @@ class Episode {
             });
         }
 
-        const images = html.querySelectorAll('img');
+        const images = doc.querySelectorAll('img');
         for (const img of images) {
             img.removeAttribute('style');
             img.removeAttribute('class');
@@ -180,10 +181,7 @@ class Episode {
             }
         }
 
-        let temp = document.createElement('div');
-        temp.innerHTML = paragraphs.map(p => p.outerHTML).join('\n');
-
-        return temp;
+        return doc;
     }
 
     /**
