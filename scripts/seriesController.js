@@ -92,14 +92,23 @@ class Episode {
     static async fromURL(url) {
         try {
             const id = Episode.extractIDFromURL(url);
-            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`);
+            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
             const html = await response.text();
 
             if (html) {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const title = doc.querySelector('title').textContent.replaceAll('- 대세는 백합 마이너 갤러리', '').trim();
-                const dateString = doc.querySelector('.gall_date').getAttribute('title').replaceAll(' ', 'T');
+                let dateString;
+                if (doc.querySelector('.gall_date')) {
+                    dateString = doc.querySelector('.gall_date').getAttribute('title').replaceAll(' ', 'T');
+                } else {
+                    dateString = doc.querySelector('.ginfo2').querySelectorAll('li')[1].textContent.replaceAll(' ', 'T') += ':00';
+                }
 
                 const date = new Date(dateString);
                 return new Episode(id, title, date);
@@ -120,7 +129,11 @@ class Episode {
      */
     async getContent() {
         try {
-            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${this.id}`);
+            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${this.id}`, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
             const html = await response.text();
 
             if (html) {
@@ -133,7 +146,12 @@ class Episode {
                 }
                 content = Episode.cleanUpContent(content);
 
-                return {content: content.innerHTML, writer: doc.querySelector('.nickname').title };
+                let writer = doc.querySelector('.nickname').title;
+                if (writer) {
+                    writer = doc.querySelector('.ginfo').querySelectorAll('li')[0].firstChild.textContent;
+                }
+
+                return { content: content.innerHTML, writer: writer };
 
             } else {
                 throw new Error("Fetching URL has failed");
