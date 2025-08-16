@@ -131,6 +131,10 @@
         </div>
     </div>
 
+
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script>
+
     <script type="module">
         import { FirebaseDB } from "./scripts/firebaseDB.mjs";
 
@@ -240,7 +244,7 @@
                     toggle: false
                 });
                 bsCollapse.show();
-                
+
                 setTimeout(() => {
                     document.getElementById(`series-${seriesId}`).scrollIntoView({ behavior: "smooth", block: "start" });
                 }, 300);
@@ -425,6 +429,7 @@
         }
 
     </script>
+
 </body>
 
 </html>
