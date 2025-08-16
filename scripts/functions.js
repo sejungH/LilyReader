@@ -11,7 +11,7 @@ function loadSeries(series) {
                     <img src="${series.cover}" width="100" />
                 </div>
                 <div class="col">
-                    <div class="lead fw-bold mb-2">${series.title}</div>
+                    <div class="fs-6 fw-bold mb-3">${series.title}</div>
                     <div><span class="badge bg-primary mb-2">총 에피소드</span> <span id="episode-count-${series.id}"
                             class="badge">${series.episodes.length}</span></div>
                     <div><span class="badge bg-primary">최근 업데이트</span> <span id="status-${series.id}"
