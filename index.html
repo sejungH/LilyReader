@@ -136,8 +136,8 @@
     </div>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>eruda.init();</script> -->
 
     <script>
         const firebaseDB = new FirebaseDB();
@@ -192,23 +192,6 @@
             document.querySelectorAll(`button[data-sortby]`).forEach(btn => { btn.classList.remove('active') });
             document.querySelector(`button[data-sortby="${sortBy}-${asc ? 'asc' : 'desc'}"]`).classList.add('active');
             document.getElementById('current-sort').innerHTML = document.querySelector(`button[data-sortby="${sortBy}-${asc ? 'asc' : 'desc'}"]`).innerHTML;
-        }
-
-        async function showSuggestions(value) {
-            const data = await firebaseDB.readData();
-            const suggestions = data.filter(series => series.title.includes(value)).slice(0, 10);
-            const list = document.getElementById('autocomplete-list');
-            list.innerHTML = '';
-            suggestions.forEach(series => {
-                const item = document.createElement('li');
-                item.innerHTML = `<a href='read.html?series=${series.id}' class='dropdown-item text-wrap'><small>${series.title}</small></a>`;
-                list.appendChild(item);
-            });
-            if (value && suggestions.length > 0) {
-                list.classList.add('show');
-            } else {
-                list.classList.remove('show');
-            }
         }
 
         function addNewSeries() {

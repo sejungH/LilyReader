@@ -91,6 +91,23 @@ function loadEpisode(series) {
     </form>`;
 }
 
+async function showSuggestions(value) {
+    const data = await firebaseDB.readData();
+    const suggestions = data.filter(series => series.title.includes(value)).slice(0, 10);
+    const list = document.getElementById('autocomplete-list');
+    list.innerHTML = '';
+    suggestions.forEach(series => {
+        const item = document.createElement('li');
+        item.innerHTML = `<a href='read.html?series=${series.id}' class='dropdown-item text-wrap'><small>${series.title}</small></a>`;
+        list.appendChild(item);
+    });
+    if (value && suggestions.length > 0) {
+        list.classList.add('show');
+    } else {
+        list.classList.remove('show');
+    }
+}
+
 function hideSpinner() {
     document.getElementById('spinner').classList.remove('d-flex');
     document.getElementById('spinner').classList.add('d-none');
