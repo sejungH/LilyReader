@@ -146,8 +146,10 @@ class Episode {
                 }
                 content = Episode.cleanUpContent(content);
 
-                let writer = doc.querySelector('.nickname').title;
-                if (writer) {
+                let writer;
+                if (doc.querySelector('.nickname')) {
+                    writer = doc.querySelector('.nickname').title;
+                } else {
                     writer = doc.querySelector('.ginfo').querySelectorAll('li')[0].firstChild.textContent;
                 }
 
