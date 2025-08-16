@@ -133,8 +133,12 @@
 
         async function init() {
             document.getElementById('series-list').innerHTML = '';
-            const seriesData = await firebaseDB.readDataById(seriesId);
-            series = Series.fromDict(seriesData);
+            const data = await firebaseDB.readDataById(seriesId);
+            let episodes = [];
+            for (const episodeData of data.episodes) {
+                episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
+            }
+            series = { id: data.id, title: data.title, cover: data.cover, episodes: episodes };
 
             if (urlParams.has('episode')) {
                 episodeId = Number.parseInt(urlParams.get('episode'));
@@ -149,9 +153,9 @@
                 td.classList.add('bg-primary')
             }
             const episode = series.episodes.find(ep => ep.id === episodeId);
-            const content = await episode.getContent();
+            const content = await getContent(episodeId);
             document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
-            document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${episode.getURL()}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
+            document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${getURL(episodeId)}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
             document.getElementById('episode-content').innerHTML = content.content;
             document.getElementById('episode-writer').innerText = content.writer;
             document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
@@ -270,13 +274,14 @@
                     let id = tr.getAttribute('data-id');
                     series.episodes.forEach(ep => {
                         if (ep.id == id) {
-                            newEpisodes.push(ep.toObject());
+                            newEpisodes.push(ep);
                         }
                     });
                 } else {
                     let episodeInput = tr.querySelector('input[type="url"]');
                     if (episodeInput.hasAttribute('data-episode')) {
-                        newEpisodes.push(JSON.parse(episodeInput.getAttribute('data-episode')));
+                        let json = JSON.parse(episodeInput.getAttribute('data-episode'));
+                        newEpisodes.push({ id: json.id, title: json.title, datetime: new Date(json.datetime) });
                     }
                 }
             }
@@ -303,11 +308,11 @@
                 spinner.classList.remove('visually-hidden');
                 document.getElementById(`btn-save-series-${seriesId}`).disabled = true;
 
-                const episode = await Episode.fromURL(url);
-                if (episode instanceof Episode) {
+                const episode = await getEpisodeFromURL(url);
+                if (episode instanceof Object) {
                     title.firstChild.innerText = episode.title;
                     spinner.classList.add('visually-hidden');
-                    input.setAttribute('data-episode', JSON.stringify(episode.toObject()));
+                    input.setAttribute('data-episode', JSON.stringify(episode));
                     document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
                 }
 

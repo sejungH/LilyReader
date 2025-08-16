@@ -153,9 +153,9 @@
             data.forEach(d => {
                 let episodes = [];
                 for (const episodeData of d.episodes) {
-                    episodes.push(new Episode(episodeData.id, episodeData.title, new Date(episodeData.datetime)));
+                    episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
                 }
-                seriesList.push(new Series(d.id, d.title, d.cover, episodes));
+                seriesList.push({ id: d.id, title: d.title, cover: d.cover, episodes: episodes });
             });
             sortSeries('datetime', false);
 
@@ -377,12 +377,13 @@
             for (let tr of tbody.getElementsByTagName('tr')) {
                 if (tr.hasAttribute('data-id')) {
                     let id = Number.parseInt(tr.getAttribute('data-id'));
-                    let episode = series.episodes.find(ep => ep.id == id)
-                    newEpisodes.push(episode.toObject());
+                    let episode = series.episodes.find(ep => ep.id == id);
+                    newEpisodes.push(episode);
                 } else {
                     let episodeInput = tr.querySelector('input[type="url"]');
                     if (episodeInput.hasAttribute('data-episode')) {
-                        newEpisodes.push(JSON.parse(episodeInput.getAttribute('data-episode')));
+                        let json = JSON.parse(episodeInput.getAttribute('data-episode'));
+                        newEpisodes.push({ id: json.id, title: json.title, datetime: new Date(json.datetime) });
                     }
                 }
             }
@@ -414,11 +415,11 @@
                     document.getElementById('save-new-series').disabled = true;
                 }
 
-                const episode = await Episode.fromURL(url);
-                if (episode instanceof Episode) {
+                const episode = await getEpisodeFromURL(url);
+                if (episode instanceof Object) {
                     title.firstChild.innerText = episode.title;
                     spinner.classList.add('visually-hidden');
-                    input.setAttribute('data-episode', JSON.stringify(episode.toObject()));
+                    input.setAttribute('data-episode', JSON.stringify(episode));
                     if (seriesId) {
                         document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
                     } else {
