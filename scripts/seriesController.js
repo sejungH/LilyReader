@@ -1,31 +1,34 @@
 async function getEpisodeFromURL(url) {
     try {
         const id = extractIDFromURL(url);
-        const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
-        const html = await response.text();
+        if (id) {
+            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            });
+            const html = await response.text();
 
-        if (html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const title = doc.querySelector('title').textContent.replaceAll('- 대세는 백합 마이너 갤러리', '').trim();
-            let dateString;
-            if (doc.querySelector('.gall_date')) {
-                dateString = doc.querySelector('.gall_date').getAttribute('title').replaceAll(' ', 'T');
+            if (html) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const title = doc.querySelector('title').textContent.replaceAll('- 대세는 백합 마이너 갤러리', '').trim();
+                let dateString;
+                if (doc.querySelector('.gall_date')) {
+                    dateString = doc.querySelector('.gall_date').getAttribute('title').replaceAll(' ', 'T');
+                } else {
+                    dateString = doc.querySelector('.ginfo2').querySelectorAll('li')[1].textContent.replaceAll(' ', 'T') + ':00';
+                }
+
+                const date = new Date(dateString);
+                return { id: id, title: title, datetime: date };
+
             } else {
-                dateString = doc.querySelector('.ginfo2').querySelectorAll('li')[1].textContent.replaceAll(' ', 'T') + ':00';
+                throw new Error("Fetching URL has failed");
             }
-
-            const date = new Date(dateString);
-            return { id: id, title: title, datetime: date };
-
         } else {
-            throw new Error("Fetching URL has failed");
+            return null;
         }
-
     } catch (error) {
         console.error("Error fetching title from URL:", error);
         return error;
@@ -71,16 +74,22 @@ async function getContent(id) {
 }
 
 function extractIDFromURL(url) {
-    if (url.startsWith('https://m.dcinside.com')) {
-        const id = url.split('/').pop();
-        return id ? parseInt(id) : null;
+    const param = new URLSearchParams(url);
+    var no = param.get('no');
+    if (no) {
+        return parseInt(no);
     } else {
-        const match = url.match(/no=(\d+)/);
-        return match ? parseInt(match[1]) : null;
+        const pattern = new URLPattern(url);
+        const id = parseInt(pattern.pathname.split('/').pop());
+        return isNaN(id) ? null : id;
     }
 }
 
 function cleanUpContent(doc) {
+    if (doc.querySelector('.dc_series')) {
+        doc.querySelector('.dc_series').remove();
+    }
+    
     const paragraphs = Array.from(doc.querySelectorAll('p, div'));
 
     while (paragraphs.length > 0 && (paragraphs[0].innerHTML == '<br>' || paragraphs[0].innerHTML == '')) {
@@ -113,6 +122,12 @@ function cleanUpContent(doc) {
             img.removeAttribute('data-original');
         }
     }
+
+    var html = doc.innerHTML;
+
+    html = html.replaceAll('\n', '');
+    html = html.replace(/(<p( style="[0-9a-zA-Z\-\:\;]+")*>(<br>)?<\/p>){2,}/g, '<p><br></p>');
+    doc.innerHTML = html;
 
     return doc;
 }

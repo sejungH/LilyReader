@@ -301,8 +301,8 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
                         <input type="url" class="form-control" placeholder="번역글 링크"
-                            pattern="https://(gall\.dcinside\.com/mgallery/board/view|m\.dcinside\.com/board/).*"
-                            title="URL은 https://gall.dcinside.com/mgallery/board/view 또는 https://m.dcinside.com/board/로 시작해야 합니다."
+                            pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*"
+                            title="URL은 https://gall.dcinside.com 또는 https://m.dcinside.com로 시작해야 합니다."
                             onchange="getTitle(this)" required/>
                     </div>
                 </div>
@@ -321,8 +321,8 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
                         <input type="url" class="form-control" placeholder="번역글 링크" 
-                            pattern="https://(gall\.dcinside\.com/mgallery/board/view|m\.dcinside\.com/board/).*" 
-                            title="URL은 https://gall.dcinside.com/mgallery/board/view 또는 https://m.dcinside.com/board/로 시작해야 합니다."
+                            pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*" 
+                            title="URL은 https://gall.dcinside.com/ 또는 https://m.dcinside.com/로 시작해야 합니다."
                             onchange="getTitle(this, '${seriesId}')" />
                     </div>
                 </td>
@@ -383,7 +383,7 @@
 
         async function getTitle(input, seriesId = null) {
             const url = input.value;
-            const match = url.match(/https:\/\/(gall\.dcinside\.com\/mgallery\/board\/view|m\.dcinside\.com\/board\/)/);
+            const match = url.match(/https:\/\/(gall\.dcinside\.com\/|m\.dcinside\.com\/)/);
 
             if (match) {
                 var title = input.parentElement.parentElement.children[0];
@@ -404,13 +404,16 @@
                     title.firstChild.innerText = episode.title;
                     spinner.classList.add('visually-hidden');
                     input.setAttribute('data-episode', JSON.stringify(episode));
-                    if (seriesId) {
-                        document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
-                    } else {
-                        document.getElementById('save-new-series').disabled = false;
-                    }
+                } else {
+                    title.firstChild.innerText = "제목을 불러오는 데 실패했습니다.";
+                    spinner.classList.add('visually-hidden');
                 }
 
+                if (seriesId) {
+                    document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
+                } else {
+                    document.getElementById('save-new-series').disabled = false;
+                }
             }
         }
 
