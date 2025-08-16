@@ -163,6 +163,11 @@ export class Episode {
         }
     }
 
+    /**
+     * 에피소드의 내용을 정리합니다.
+     * @param {Document} doc 
+     * @returns {Document}
+     */
     static cleanUpContent(doc) {
         // html.querySelectorAll('div').forEach(node => node.remove());
 
@@ -225,6 +230,10 @@ export class Episode {
         return `https://gall.dcinside.com/mgallery/board/view/?id=lilyfever&no=${this.id}`;
     }
 
+    /**
+     * 에피소드의 정보를 객체 형태로 반환합니다.
+     * @returns {Object}
+     */
     toObject() {
         return {
             id: this.id,
