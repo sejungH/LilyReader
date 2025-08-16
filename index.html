@@ -153,7 +153,7 @@
             data.forEach(d => {
                 let episodes = [];
                 for (const episodeData of d.episodes) {
-                    episodes.push(Episode.fromDict(episodeData));
+                    episodes.push(new Episode(episodeData.id, episodeData.title, new Date(episodeData.datetime)));
                 }
                 seriesList.push(new Series(d.id, d.title, d.cover, episodes));
             });
