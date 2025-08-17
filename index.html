@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 
     <script src="./scripts/seriesController.js"></script>
     <script src="./scripts/firebaseDB.js"></script>
@@ -137,11 +138,12 @@
         </div>
     </div>
 
-
-    <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script> -->
-
     <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if(urlParams.get('dev') && urlParams.get('dev') === 'true') {
+            eruda.init();
+        }
+
         const firebaseDB = new FirebaseDB();
         var seriesList = [];
 

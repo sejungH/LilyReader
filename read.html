@@ -14,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 
     <script src="./scripts/seriesController.js"></script>
     <script src="./scripts/firebaseDB.js"></script>
@@ -54,7 +55,8 @@
 <body data-bs-theme="dark">
     <nav class="navbar navbar-expand-md bg-primary-subtle">
         <div class="container-md">
-            <a class="navbar-brand" href="./"><i class="bi bi-book-fill fs-3 me-2"></i><span class="fs-3" style="font-family: 'Bebas Neue', sans-serif;">Lily Reader</span></a>
+            <a class="navbar-brand" href="./"><i class="bi bi-book-fill fs-3 me-2"></i><span class="fs-3"
+                    style="font-family: 'Bebas Neue', sans-serif;">Lily Reader</span></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
                 aria-label="Toggle navigation">
@@ -124,9 +126,12 @@
     </div>
 
     <script>
-        const firebaseDB = new FirebaseDB();
-
         const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('dev') && urlParams.get('dev') === 'true') {
+            eruda.init();
+        }
+
+        const firebaseDB = new FirebaseDB();
         const seriesId = urlParams.get('series');
         var episodeId;
         var series;
