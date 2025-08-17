@@ -79,9 +79,13 @@ function extractIDFromURL(url) {
     if (no) {
         return parseInt(no);
     } else {
-        const pattern = new URLPattern(url);
-        const id = parseInt(pattern.pathname.split('/').pop());
-        return isNaN(id) ? null : id;
+        const match = url.match(/\/(\d+)(?:\?.*)?$/);
+        if (match) {
+            const id = parseInt(match[1]);
+            return isNaN(id) ? null : id;
+        } else {
+            return null;
+        }
     }
 }
 
