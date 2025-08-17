@@ -30,7 +30,7 @@
     </style>
 </head>
 
-<body data-bs-theme="dark">
+<body class="d-flex flex-column min-vh-100" data-bs-theme="dark">
     <nav class="navbar navbar-expand-md bg-primary-subtle">
         <div class="container-md">
             <a class="navbar-brand" href="./"><i class="bi bi-book-fill fs-3 me-2"></i><span class="fs-3"
@@ -53,7 +53,7 @@
         </div>
     </nav>
 
-    <div id="main-container" class="container-md">
+    <div id="main-container" class="container-md mb-4">
         <div class="d-flex mt-3">
             <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
                 aria-expanded="false">정렬</button>
@@ -134,6 +134,13 @@
             </div>
         </div>
     </div>
+
+    <footer class="bg-secondary-subtle mt-auto">
+        <div class="container-md py-4 text-center">
+            <p class="text-muted mb-2">&copy; 2025 Lily Reader</p>
+            <a href="mailto:lilyd3v@gmail.com" class="text-secondary"><small>버그 및 오류 제보</small></a>
+        </div>
+    </footer>
 
     <div id="spinner" class="bg-dark bg-opacity-50 position-fixed top-0 bottom-0 start-0 end-0 z-5">
         <div class="position-absolute top-50 start-50 translate-middle z-3">
