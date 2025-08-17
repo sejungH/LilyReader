@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
@@ -49,6 +49,12 @@
         #episode-content img {
             max-width: 100%;
         }
+
+        input,
+        textarea,
+        select {
+            touch-action: manipulation;
+        }
     </style>
 </head>
 
@@ -75,7 +81,7 @@
         </div>
     </nav>
 
-    <div class="container-md py-3">
+    <div id="main-container" class="container-md py-3">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="./">목록</a></li>
@@ -83,7 +89,7 @@
             </ol>
         </nav>
         <div class="accordion my-3" id="series-list"></div>
-        <div>
+        <div id="content-container">
             <div class="row py-3 border-bottom">
                 <div class="col-3">
                     <button class="btn btn-sm btn-outline-light prev-episode">&lt; 이전화</button>
@@ -141,56 +147,70 @@
         async function init() {
             document.getElementById('series-list').innerHTML = '';
             const data = await firebaseDB.readDataById(seriesId);
-            let episodes = [];
-            for (const episodeData of data.episodes) {
-                episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
-            }
-            series = { id: data.id, title: data.title, cover: data.cover, episodes: episodes };
+            console.log(data);
+            if (data) {
+                let episodes = [];
+                for (const episodeData of data.episodes) {
+                    episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
+                }
+                series = { id: data.id, title: data.title, cover: data.cover, episodes: episodes };
 
-            if (urlParams.has('episode')) {
-                episodeId = Number.parseInt(urlParams.get('episode'));
+                if (urlParams.has('episode')) {
+                    episodeId = Number.parseInt(urlParams.get('episode'));
+                } else {
+                    episodeId = series.episodes[0].id;
+                }
+
+                await loadSeries(series);
+                document.getElementById('breadcrumb-title').innerText = series.title;
+
+                const episode = series.episodes.find(ep => ep.id === episodeId);
+                if (episode) {
+                    for (let td of document.getElementById(`table-${seriesId}`).querySelector(`tr[data-id="${episodeId}"]`).children) {
+                        td.classList.add('bg-primary')
+                    }
+
+                    const content = await getContent(episodeId);
+                    document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
+                    document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${getURL(episodeId)}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
+                    document.getElementById('episode-content').innerHTML = content.content;
+                    document.getElementById('episode-writer').innerText = content.writer;
+                    document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
+
+                    for (let btn of document.getElementsByClassName('prev-episode')) {
+                        const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
+                        if (episodeIndex > 0) {
+                            const prevEpisode = series.episodes[episodeIndex - 1];
+                            btn.addEventListener('click', () => {
+                                window.location.href = `read.html?series=${seriesId}&episode=${prevEpisode.id}`;
+                            });
+                        } else {
+                            btn.classList.add('disabled');
+                        }
+
+                    }
+
+                    for (let btn of document.getElementsByClassName('next-episode')) {
+                        const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
+                        if (episodeIndex < series.episodes.length - 1) {
+                            const nextEpisode = series.episodes[episodeIndex + 1];
+                            btn.addEventListener('click', () => {
+                                window.location.href = `read.html?series=${seriesId}&episode=${nextEpisode.id}`;
+                            });
+                        } else {
+                            btn.classList.add('disabled');
+                        }
+
+                    }
+                } else {
+                    document.querySelector('#content-container').innerHTML = `
+                    <div class="w-100 text-center text-secondary my-5">
+                        에피소드를 찾을 수 없습니다
+                    </div>`;
+                }
+
             } else {
-                episodeId = series.episodes[0].id;
-            }
-
-            await loadSeries(series);
-
-            document.getElementById('breadcrumb-title').innerText = series.title;
-            for (let td of document.getElementById(`table-${seriesId}`).querySelector(`tr[data-id="${episodeId}"]`).children) {
-                td.classList.add('bg-primary')
-            }
-            const episode = series.episodes.find(ep => ep.id === episodeId);
-            const content = await getContent(episodeId);
-            document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
-            document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${getURL(episodeId)}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
-            document.getElementById('episode-content').innerHTML = content.content;
-            document.getElementById('episode-writer').innerText = content.writer;
-            document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
-
-            for (let btn of document.getElementsByClassName('prev-episode')) {
-                const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
-                if (episodeIndex > 0) {
-                    const prevEpisode = series.episodes[episodeIndex - 1];
-                    btn.addEventListener('click', () => {
-                        window.location.href = `read.html?series=${seriesId}&episode=${prevEpisode.id}`;
-                    });
-                } else {
-                    btn.classList.add('disabled');
-                }
-
-            }
-
-            for (let btn of document.getElementsByClassName('next-episode')) {
-                const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
-                if (episodeIndex < series.episodes.length - 1) {
-                    const nextEpisode = series.episodes[episodeIndex + 1];
-                    btn.addEventListener('click', () => {
-                        window.location.href = `read.html?series=${seriesId}&episode=${nextEpisode.id}`;
-                    });
-                } else {
-                    btn.classList.add('disabled');
-                }
-
+                displayError(404, '해당 시리즈를 찾을 수 없습니다');
             }
 
             hideSpinner();
@@ -252,7 +272,8 @@
         }
 
         function closeEdit(seriesId) {
-            loadEpisode(series);
+            if (series.id === seriesId)
+                loadEpisode(series);
         }
 
         async function saveSeries(seriesId) {

@@ -117,3 +117,11 @@ function showSpinner() {
     document.getElementById('spinner').classList.remove('d-none');
     document.getElementById('spinner').classList.add('d-flex');
 }
+
+function displayError(no, message) {
+    document.querySelector('#main-container').innerHTML = `
+    <div class="position-absolute top-50 start-50 translate-middle text-center w-100 text-secondary">
+        <h1 class='fw-bold'>ERROR ${no}</h1>
+        <span>${message}</span>
+    </div>`;
+}

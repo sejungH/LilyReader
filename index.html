@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
@@ -21,6 +21,13 @@
     <script src="./scripts/functions.js"></script>
 
     <title>LilyReader</title>
+    <style>
+        input,
+        textarea,
+        select {
+            touch-action: manipulation;
+        }
+    </style>
 </head>
 
 <body data-bs-theme="dark">
@@ -46,7 +53,7 @@
         </div>
     </nav>
 
-    <div class="container-md">
+    <div id="main-container" class="container-md">
         <div class="d-flex mt-3">
             <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"
                 aria-expanded="false">정렬</button>
@@ -140,7 +147,7 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        if(urlParams.get('dev') && urlParams.get('dev') === 'true') {
+        if (urlParams.get('dev') && urlParams.get('dev') === 'true') {
             eruda.init();
         }
 
@@ -354,7 +361,7 @@
         }
 
         function closeEdit(seriesId) {
-            loadEpisode(seriesId);
+            loadEpisode(seriesList.find(s => s.id === seriesId));
         }
 
         async function saveSeries(seriesId) {

@@ -38,7 +38,7 @@ class FirebaseDB {
             const docRef = this.db.collection("series").doc(docId);
             const docSnap = await docRef.get();
 
-            if (docSnap) {
+            if (docSnap.exists) {
                 console.log("Document data:", docSnap.data());
                 return { id: docSnap.id, ...docSnap.data() };
             } else {

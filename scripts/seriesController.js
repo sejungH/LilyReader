@@ -30,7 +30,7 @@ async function getEpisodeFromURL(url) {
             return null;
         }
     } catch (error) {
-        console.error("Error fetching title from URL:", error);
+        console.error("Error fetching episode from URL:", error);
         return error;
     }
 }
