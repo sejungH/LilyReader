@@ -2,6 +2,7 @@
 
 function initGoogleAuth() {
     var googleUser = window.sessionStorage.getItem('googleUser');
+    var width = document.getElementById('login_container').offsetWidth;
 
     const login_container = document.getElementById('login_container');
     if (!googleUser) {
@@ -14,7 +15,7 @@ function initGoogleAuth() {
                     data-auto_prompt="false">
                 </div>
                 <div class="g_id_signin" data-type="standard" data-shape="circle" data-theme="outline"
-                    data-text="signin" data-size="large" data-logo_alignment="center">
+                    data-text="signin" data-size="large" data-width="${width}" data-logo_alignment="center">
                 </div>
             </div>
         </div>`;
