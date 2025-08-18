@@ -1,4 +1,8 @@
 function loadSeries(series) {
+    var episode_count = 0;
+    series.episodes.forEach(ep => { if (ep.id > 0) episode_count++; });
+    const last_episode = series.episodes.filter(ep => ep.id > 0).slice(-1)[0];
+
     const seriesElement = document.createElement('div');
     seriesElement.id = `series-${series.id}`;
     seriesElement.className = 'accordion-item';
@@ -8,14 +12,14 @@ function loadSeries(series) {
             data-bs-target="#flush-collapse-${series.id}" aria-expanded="false" aria-controls="flush-collapse-${series.id}">
             <div class="row">
                 <div class="col-auto">
-                    <img src="${series.cover}" width="100" />
+                    <img id='series-cover-${series.id}' src="${series.cover}" width="100" />
                 </div>
                 <div class="col">
                     <div class="fs-6 fw-bold mb-3">${series.title}</div>
                     <div><span class="badge bg-primary mb-2">총 에피소드</span> <span id="episode-count-${series.id}"
-                            class="badge">${series.episodes.length}</span></div>
+                            class="badge">${episode_count}</span></div>
                     <div><span class="badge bg-primary">최근 업데이트</span> <span id="status-${series.id}"
-                            class="badge">${series.episodes[series.episodes.length - 1].datetime.toISOString().split('T')[0]}</span></div>
+                            class="badge">${last_episode.datetime.toISOString().split('T')[0]}</span></div>
                 </div>
             </div>
         </button>
@@ -25,6 +29,12 @@ function loadSeries(series) {
     </div>`;
     document.getElementById('series-list').appendChild(seriesElement);
     loadEpisode(series);
+
+    const img = document.getElementById(`series-cover-${series.id}`);
+    img.onerror = function () {
+        this.onerror = null;
+        this.src = './images/cover_placeholder.png';
+    };
 
     new Sortable(document.getElementById(`table-${series.id}`).getElementsByTagName('tbody')[0], {
         handle: '.handle',
@@ -54,23 +64,39 @@ function loadEpisode(series) {
                 </tr>
             </thead>
             <tbody>
-                ${series.episodes.map(episode => `
-                <tr data-id="${episode.id}" style="cursor: pointer;" onclick="location.href='read?series=${series.id}&episode=${episode.id}'">
-                    <td class="text-center align-middle collapse drag-icon handle"><i class="bi bi-list"></i></td>
-                    <td><small>${episode.title}</small></td>
-                    <td class="d-none d-md-table-cell text-center"><small>${episode.datetime.toISOString().split('T')[0]}</small></td>
-                    <td class="text-center align-middle collapse delete-icon">
-                        <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
-                    </td>
-                </tr>
-                `).join('')}
+                ${series.episodes.map(episode => {
+        if (episode.id > 0) {
+            return `
+            <tr data-id="${episode.id}" style="cursor: pointer;" onclick="location.href='read?series=${series.id}&episode=${episode.id}'">
+                <td class="text-center align-middle collapse drag-icon handle"><i class="bi bi-list"></i></td>
+                <td><small>${episode.title}</small></td>
+                <td class="d-none d-md-table-cell text-center"><small>${episode.datetime.toISOString().split('T')[0]}</small></td>
+                <td class="text-center align-middle collapse delete-icon">
+                    <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+                </td>
+            </tr>`;
+        } else {
+            return `
+            <tr data-id="${episode.id}">
+                <td class="text-center align-middle collapse drag-icon handle bg-black"><i class="bi bi-list"></i></td>
+                <td class="fw-bold bg-black"><small>${episode.title}</small></td>
+                <td class="d-none d-md-table-cell bg-black"></td>
+                <td class="text-center align-middle collapse delete-icon bg-black">
+                    <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+                </td>
+            </tr>`;
+        }
+    }).join('')}
             </tbody>
             <tfoot class="collapse">
                 <tr>
                     <td colspan="4">
-                        <div class="d-grid">
+                        <div class="d-flex justify-content-center gap-2">
                             <button class='btn btn-sm btn-success d-block' type='button' onclick='newEpisode("${series.id}")'>
                                 <i class="bi bi-plus-circle-fill"></i> 새 애피소드 추가
+                            </button>
+                            <button class='btn btn-sm btn-light d-block' type='button' onclick='newHorizontalLine("${series.id}")'>
+                                <i class="bi bi-plus-circle-fill"></i> 구분선 추가
                             </button>
                         </div>
                     </td>
@@ -90,6 +116,90 @@ function loadEpisode(series) {
         </div>
     </form>`;
 }
+
+
+function newEpisode(seriesId) {
+    if (seriesId == "new-series") {
+        var episodeList = document.getElementById('episode-list');
+        var newEpisodeItem = document.createElement('div');
+        newEpisodeItem.className = 'list-group-item d-flex align-items-center border-0 px-0 pt-0';
+        newEpisodeItem.innerHTML = `
+        <i class="bi bi-list pe-2 d-block col-auto handle"></i>
+        <div class="col">
+            <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
+            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                <input type="url" class="form-control" placeholder="번역글 링크"
+                    pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*"
+                    title="URL은 https://gall.dcinside.com 또는 https://m.dcinside.com로 시작해야 합니다."
+                    onchange="getTitle(this)" required/>
+            </div>
+        </div>
+        <i class="bi bi-trash ps-2 text-danger d-block col-auto" style="cursor: pointer;" onclick="removeRow(this)"></i>`;
+        episodeList.appendChild(newEpisodeItem);
+
+    } else {
+        var table = document.getElementById(`table-${seriesId}`);
+        var tbody = table.getElementsByTagName('tbody')[0];
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+        <td class="text-center align-middle handle"><i class="bi bi-list"></i></td>
+        <td>
+            <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
+            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                <input type="url" class="form-control" placeholder="번역글 링크" 
+                    pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*" 
+                    title="URL은 https://gall.dcinside.com/ 또는 https://m.dcinside.com/로 시작해야 합니다."
+                    onchange="getTitle(this, '${seriesId}')" />
+            </div>
+        </td>
+        <td class="d-none d-md-table-cell"></td>
+        <td class="text-center align-middle delete-icon">
+            <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+        </td>`;
+        tbody.appendChild(tr);
+    }
+}
+
+
+function newHorizontalLine(seriesId) {
+    if (seriesId == "new-series") {
+        var episodeList = document.getElementById('episode-list');
+        var newEpisodeItem = document.createElement('div');
+        newEpisodeItem.className = 'list-group-item d-flex align-items-center bg-black border-0 px-0 py-1';
+        newEpisodeItem.innerHTML = `
+        <i class="bi bi-list pe-2 d-block col-auto handle"></i>
+        <div class="col">
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" placeholder="구분선 내용" required/>
+            </div>
+        </div>
+        <i class="bi bi-trash ps-2 text-danger d-block col-auto" style="cursor: pointer;" onclick="removeRow(this)"></i>`;
+        episodeList.appendChild(newEpisodeItem);
+
+    } else {
+        var table = document.getElementById(`table-${seriesId}`);
+        var tbody = table.getElementsByTagName('tbody')[0];
+        var tr = document.createElement('tr');
+        tr.innerHTML = `
+                <td class="text-center align-middle handle bg-black"><i class="bi bi-list"></i></td>
+                <td class="bg-black">
+                    <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" placeholder="구분선 내용" required/>
+                    </div>
+                </td>
+                <td class="d-none d-md-table-cell bg-black"></td>
+                <td class="text-center align-middle delete-icon bg-black">
+                    <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+                </td>
+            `;
+        tbody.appendChild(tr);
+    }
+}
+
 
 async function showSuggestions(value) {
     const data = await firebaseDB.readData();

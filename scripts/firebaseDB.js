@@ -9,6 +9,19 @@ const FIREBASE_CONFIG = {
     measurementId: "G-GP8PTD3TLS"
 };
 
+let DEVMODE = false;
+if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    DEVMODE = true;
+}
+
+var COLLECTION = "series";
+var LOG_COLLECTION = "logs";
+
+if (DEVMODE) {
+    COLLECTION = "test_series";
+    LOG_COLLECTION = "test_logs";
+}
+
 class FirebaseDB {
 
     /**
@@ -24,7 +37,7 @@ class FirebaseDB {
      * @returns {Promise<Array>}
      */
     async readData() {
-        const docSnap = await this.db.collection("series").get();
+        const docSnap = await this.db.collection(COLLECTION).get();
         return docSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
@@ -35,7 +48,7 @@ class FirebaseDB {
      */
     async readDataById(docId) {
         try {
-            const docRef = this.db.collection("series").doc(docId);
+            const docRef = this.db.collection(COLLECTION).doc(docId);
             const docSnap = await docRef.get();
 
             if (docSnap.exists) {
@@ -59,8 +72,9 @@ class FirebaseDB {
      */
     async writeData(doc) {
         try {
-            const docRef = this.db.collection("series").doc();
+            const docRef = this.db.collection(COLLECTION).doc();
             await docRef.set(doc);
+            this.recordLog(new Date(), `Document written [${docRef.id}]: ` + JSON.stringify(doc));
             console.log("Document written with ID: ", docRef.id);
             return docRef.id;
 
@@ -77,8 +91,9 @@ class FirebaseDB {
      */
     async updateData(docId, updatedFields) {
         try {
-            const docRef = this.db.collection("series").doc(docId);
+            const docRef = this.db.collection(COLLECTION).doc(docId);
             await docRef.update(updatedFields);
+            this.recordLog(new Date(), `Document updated [${docId}]: ` + JSON.stringify(updatedFields));
             console.log("Document updated with ID: ", docId);
         } catch (error) {
             console.error("Error updating document: ", error);
@@ -91,12 +106,37 @@ class FirebaseDB {
      */
     async deleteData(docId) {
         try {
-            const docRef = this.db.collection("series").doc(docId);
+            const docRef = this.db.collection(COLLECTION).doc(docId);
             await docRef.delete();
+            this.recordLog(new Date(), `Document deleted [${docId}]`);
             console.log("Document deleted with ID: ", docId);
 
         } catch (error) {
             console.error("Error deleting document: ", error);
+        }
+    }
+
+    /**
+     * 
+     * @param {Date} date 
+     * @param {String} log 
+     */
+    async recordLog(date, log) {
+        try {
+            // yyyymmdd_hhmmss 포맷 생성
+            const pad = n => String(n).padStart(2, '0');
+            const yyyymmdd = date.getFullYear().toString() +
+                pad(date.getMonth() + 1) +
+                pad(date.getDate());
+            const hhmmss = pad(date.getHours()) +
+                pad(date.getMinutes()) +
+                pad(date.getSeconds());
+            const docId = `${yyyymmdd}_${hhmmss}`;
+
+            const docRef = this.db.collection(LOG_COLLECTION).doc(docId);
+            await docRef.set({ timestamp: date, log: log });
+        } catch (error) {
+            console.error("Error recording log: ", error);
         }
     }
 

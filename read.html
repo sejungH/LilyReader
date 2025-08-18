@@ -15,20 +15,28 @@
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GP8PTD3TLS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-GP8PTD3TLS');
+    </script>
 
     <script src="./scripts/seriesController.js"></script>
     <script src="./scripts/firebaseDB.js"></script>
     <script src="./scripts/functions.js"></script>
 
     <link rel="icon" type="image/x-icon" href="./icons/favicon.ico">
-    <meta property="og:image" content="https://www.lilyreader.online/icon.png">
+    <meta property="og:image" content="https://www.lilyreader.online/icons/icon.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1024">
     <meta property="og:image:height" content="1024">
     <meta property="og:title" content="LILY READER">
     <meta property="og:description" content="대세는 백합 갤번역 리더기 by.LILYD3V">
     <title>LilyReader</title>
-
 
     <style>
         @font-face {
@@ -192,10 +200,12 @@
                     document.getElementById('episode-writer').innerText = content.writer;
                     document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
 
+                    var filteredEpisodes = series.episodes.filter(ep => ep.id > 0);
                     for (let btn of document.getElementsByClassName('prev-episode')) {
-                        const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
+                        const episodeIndex = filteredEpisodes.findIndex(ep => ep.id === episodeId);
+
                         if (episodeIndex > 0) {
-                            const prevEpisode = series.episodes[episodeIndex - 1];
+                            const prevEpisode = filteredEpisodes[episodeIndex - 1];
                             btn.addEventListener('click', () => {
                                 window.location.href = `read.html?series=${seriesId}&episode=${prevEpisode.id}`;
                             });
@@ -206,9 +216,9 @@
                     }
 
                     for (let btn of document.getElementsByClassName('next-episode')) {
-                        const episodeIndex = series.episodes.findIndex(ep => ep.id === episodeId);
-                        if (episodeIndex < series.episodes.length - 1) {
-                            const nextEpisode = series.episodes[episodeIndex + 1];
+                        const episodeIndex = filteredEpisodes.findIndex(ep => ep.id === episodeId);
+                        if (episodeIndex < filteredEpisodes.length - 1) {
+                            const nextEpisode = filteredEpisodes[episodeIndex + 1];
                             btn.addEventListener('click', () => {
                                 window.location.href = `read.html?series=${seriesId}&episode=${nextEpisode.id}`;
                             });
@@ -255,30 +265,6 @@
             });
         }
 
-        function newEpisode(seriesId) {
-            var table = document.getElementById(`table-${seriesId}`);
-            var tbody = table.getElementsByTagName('tbody')[0];
-            var tr = document.createElement('tr');
-            tr.innerHTML = `
-            <td class="text-center align-middle handle"><i class="bi bi-list"></i></td>
-            <td>
-                <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
-                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                    <input type="url" class="form-control" placeholder="번역글 링크" 
-                        pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*" 
-                        title="URL은 https://gall.dcinside.com/ 또는 https://m.dcinside.com/로 시작해야 합니다."
-                        onchange="getTitle(this)" />
-                </div>
-            </td>
-            <td class="d-none d-md-table-cell"></td>
-            <td class="text-center align-middle delete-icon">
-                <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
-            </td>`;
-            tbody.appendChild(tr);
-        }
-
         function removeRow(element) {
             var row = element.closest('tr');
             if (row) {
@@ -295,6 +281,8 @@
             showSpinner();
             var newEpisodes = [];
             var tbody = document.getElementById(`table-${seriesId}`).getElementsByTagName('tbody')[0];
+            var countlines = 0;
+            series.episodes.forEach(ep => { if (ep.id < 0) countlines--; });
             for (let tr of tbody.getElementsByTagName('tr')) {
                 if (tr.hasAttribute('data-id')) {
                     let id = tr.getAttribute('data-id');
@@ -305,9 +293,15 @@
                     });
                 } else {
                     let episodeInput = tr.querySelector('input[type="url"]');
-                    if (episodeInput.hasAttribute('data-episode')) {
+                    if (episodeInput && episodeInput.hasAttribute('data-episode')) {
                         let json = JSON.parse(episodeInput.getAttribute('data-episode'));
                         newEpisodes.push({ id: json.id, title: json.title, datetime: new Date(json.datetime) });
+                    }
+
+                    let lineInput = tr.querySelector('input[type="text"]');
+                    if (lineInput) {
+                        countlines--;
+                        newEpisodes.push({ id: countlines, title: DOMPurify.sanitize(lineInput.value), datetime: new Date() });
                     }
                 }
             }
