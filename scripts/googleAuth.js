@@ -6,13 +6,17 @@ function initGoogleAuth() {
     const login_container = document.getElementById('login_container');
     if (!googleUser) {
         login_container.innerHTML = `
-        <div id="g_id_onload" class="g_id_onload"
-            data-client_id="612017471498-k523pec9qoqkb2pb6195j54knipkkmnj.apps.googleusercontent.com"
-            data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse"
-            data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin" data-type="standard" data-shape="circle" data-theme="outline"
-            data-text="signin" data-size="large" data-logo_alignment="center">
+        <div class="row">
+            <div class="col-12">
+                <div id="g_id_onload" class="g_id_onload"
+                    data-client_id="612017471498-k523pec9qoqkb2pb6195j54knipkkmnj.apps.googleusercontent.com"
+                    data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse"
+                    data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin" data-type="standard" data-shape="circle" data-theme="outline"
+                    data-text="signin" data-size="large" data-logo_alignment="center">
+                </div>
+            </div>
         </div>`;
 
     } else {
