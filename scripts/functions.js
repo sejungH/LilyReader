@@ -297,7 +297,7 @@ onclick="toggleBookmark(event, '${seriesId}')" style="cursor: pointer;"></i> `;
 async function toggleBookmark(event = null, seriesId) {
     if (user) {
         var userInfo = JSON.parse(window.sessionStorage.getItem('googleUser'));
-        var bookmark = document.getElementById(`bookmark - ${seriesId} `);
+        var bookmark = document.getElementById(`bookmark-${seriesId}`);
 
         if (bookmark.getAttribute('data-bookmarked') == "true") {
             bookmark.classList.add('bi-star');
@@ -320,15 +320,4 @@ async function toggleBookmark(event = null, seriesId) {
             await firebaseDB.addBookmark(userInfo.email, seriesId);
         }
     }
-}
-
-async function handleCredentialResponse(response) {
-    const token = response.credential;
-    const userInfo = parseJwt(token);
-    window.sessionStorage.setItem('googleUser', JSON.stringify(userInfo));
-    const user = await firebaseDB.getUser(userInfo.email);
-    if (!user) {
-        await firebaseDB.addUser(userInfo);
-    }
-    location.reload();
 }
