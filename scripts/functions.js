@@ -7,19 +7,23 @@ function loadSeries(series) {
     seriesElement.id = `series-${series.id}`;
     seriesElement.className = 'accordion-item';
     seriesElement.innerHTML = `
-    <div class="accordion-header">
+    <div id='series-header-${series.id}' class="accordion-header">
         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#flush-collapse-${series.id}" aria-expanded="false" aria-controls="flush-collapse-${series.id}">
-            <div class="row">
+            <div class="row w-100">
                 <div class="col-auto">
                     <img id='series-cover-${series.id}' src="${series.cover}" width="100" />
                 </div>
                 <div class="col">
-                    <div class="fs-6 fw-bold mb-3">${series.title}</div>
+                    <div id='series-title-${series.id}' class="fs-6 fw-bold mb-3">${series.title}</div>
                     <div><span class="badge bg-primary mb-2">총 에피소드</span> <span id="episode-count-${series.id}"
                             class="badge">${episode_count}</span></div>
                     <div><span class="badge bg-primary">최근 업데이트</span> <span id="status-${series.id}"
                             class="badge">${last_episode.datetime.toISOString().split('T')[0]}</span></div>
+                    <div class="text-end mt-3">
+                        <a href="javascript:deleteSeries('${series.id}')" id="btn-delete-series-${series.id}" class="btn btn-sm btn-danger collapse">
+                            <i class="bi bi-trash"></i> 삭제</a>
+                    </div>
                 </div>
             </div>
         </button>
@@ -48,12 +52,6 @@ function loadEpisode(series) {
     let accordion_body = document.getElementById(`flush-collapse-${series.id}`).getElementsByClassName('accordion-body')[0];
     accordion_body.innerHTML = `
     <form onsubmit="saveSeries('${series.id}'); return false;">
-        <div class="text-end">
-            <button id="btn-delete-series-${series.id}" class="btn btn-sm btn-danger collapse" type="button" 
-            onclick="if(confirm('[${series.title}] 을(를) 삭제하시겠습니까?') == true) { deleteSeries('${series.id}') }">
-                <i class="bi bi-trash"></i> 삭제
-            </button>
-        </div>
         <table id="table-${series.id}" class="table table-sm table-striped table-hover">
             <thead>
                 <tr>
@@ -200,6 +198,36 @@ function newHorizontalLine(seriesId) {
     }
 }
 
+function removeRow(element) {
+    var row = element.closest('tr');
+    if (row) {
+        row.remove();
+    } else {
+        if (document.getElementById('episode-list').children.length > 1) {
+            row = element.closest('.list-group-item');
+            if (row) {
+                row.remove();
+            }
+        }
+    }
+}
+
+function previewCoverImage(input, id) {
+    const url = input.value;
+    const img = document.getElementById(id);
+
+    try {
+        new URL(url);
+        img.src = url;
+        img.onerror = function () {
+            this.onerror = null;
+            this.src = './images/cover_placeholder.png';
+        };
+
+    } catch (error) {
+        img.src = './images/cover_placeholder.png';
+    }
+}
 
 async function showSuggestions(value) {
     const data = await firebaseDB.readData();

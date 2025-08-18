@@ -117,8 +117,8 @@
                 <form onsubmit="saveNewSeries(); return false;">
                     <div class="modal-body row">
                         <div class="col-md-3 text-center">
-                            <img src="./images/cover_placeholder.png" alt="Cover Image"
-                                class="img-fluid mx-auto" id="cover-preview" style="max-width: 100%;" />
+                            <img src="./images/cover_placeholder.png" alt="Cover Image" class="img-fluid mx-auto"
+                                id="cover-preview" style="max-width: 100%;" />
                         </div>
                         <div class="col-md-9 mt-3 mt-md-0">
                             <p class="mb-2">시리즈</p>
@@ -130,7 +130,7 @@
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
                                 <input type="url" id="input-series-cover" class="form-control" placeholder="커버 이미지 URL"
-                                    onchange="previewCoverImage(this)" required />
+                                    onchange="previewCoverImage(this, 'cover-preview')" />
                             </div>
                             <p class="mt-4 mb-2">에피소드 목록</p>
                             <div class="list-group list-group-flush" id="episode-list"></div>
@@ -256,8 +256,7 @@
 
             showSpinner();
             var title = document.getElementById('input-series-title').value;
-            title = DOMPurify.sanitize(title);
-            var cover = document.getElementById('input-series-cover').value;
+            var cover = document.getElementById('cover-preview').src;
 
             var countlines = 0;
             var newEpisodes = [];
@@ -272,7 +271,7 @@
                 }
             }
 
-            var seriesId = await firebaseDB.writeData({ title: title, cover: cover, episodes: newEpisodes });
+            var seriesId = await firebaseDB.writeData({ title: DOMPurify.sanitize(title), cover: cover, episodes: newEpisodes });
 
             if (seriesId) {
                 hideSpinner();
@@ -289,26 +288,20 @@
             }
         }
 
-        function previewCoverImage(input) {
-            const url = input.value;
-            const img = document.getElementById('cover-preview');
-
-            try {
-                new URL(url);
-                img.src = url;
-                img.onerror = function () {
-                    this.onerror = null;
-                    this.src = './images/cover_placeholder.png';
-                };
-
-            } catch (error) {
-                img.src = './images/cover_placeholder.png';
-            }
-        }
-
         function editSeries(seriesId) {
             const series = seriesList.find(s => s.id === seriesId);
             if (series) {
+                var series_title = document.getElementById(`series-title-${seriesId}`);
+                series_title.innerHTML = `
+                <div class='input-group input-group-sm'>
+                    <span class='input-group-text'><i class="bi bi-pencil-fill"></i></span>
+                    <input type="text" id="input-edit-series-title-${seriesId}" class='form-control' value="${series.title}" required />
+                </div>`;
+                series_title.innerHTML += `
+                <div class='input-group input-group-sm mt-2'>
+                    <span class='input-group-text'><i class="bi bi-image"></i></span>
+                    <input type="url" id="input-edit-series-cover-${seriesId}" class='form-control' value="${series.cover}" onchange="previewCoverImage(this, 'series-cover-${series.id}')" />
+                </div>`;
                 var table = document.getElementById(`table-${seriesId}`);
                 for (var icon of table.getElementsByClassName('drag-icon')) {
                     icon.classList.toggle('collapse');
@@ -331,32 +324,36 @@
                     tr.removeAttribute('onclick');
                 });
 
+                document.querySelectorAll('.accordion-button').forEach(button => {
+                    button.removeAttribute('data-bs-toggle');
+                });
+
             } else {
                 console.error(`Series with ID ${seriesId} not found.`);
             }
         }
 
-        function removeRow(element) {
-            var row = element.closest('tr');
-            if (row) {
-                row.remove();
-            } else {
-                if (document.getElementById('episode-list').children.length > 1) {
-                    row = element.closest('.list-group-item');
-                    if (row) {
-                        row.remove();
-                    }
-                }
-            }
-        }
-
         function closeEdit(seriesId) {
+            var series = seriesList.find(s => s.id === seriesId);
+            var series_title = document.getElementById(`series-title-${seriesId}`);
+            series_title.innerHTML = series.title;
+            var series_cover = document.getElementById(`series-cover-${seriesId}`);
+            series_cover.src = series.cover;
+            document.getElementById(`btn-delete-series-${seriesId}`).classList.toggle('collapse');
+
+            document.querySelectorAll('.accordion-button').forEach(button => {
+                button.setAttribute('data-bs-toggle', 'collapse');
+            });
+
             loadEpisode(seriesList.find(s => s.id === seriesId));
         }
 
         async function saveSeries(seriesId) {
             showSpinner();
             const series = seriesList.find(s => s.id === seriesId);
+            var newTitle = document.getElementById(`input-edit-series-title-${seriesId}`).value;
+            var newCover = document.getElementById(`series-cover-${seriesId}`).src;
+
             var newEpisodes = [];
             var tbody = document.getElementById(`table-${seriesId}`).getElementsByTagName('tbody')[0];
             var countlines = 0;
@@ -381,7 +378,7 @@
                 }
             }
 
-            await firebaseDB.updateData(series.id, { episodes: newEpisodes });
+            await firebaseDB.updateData(series.id, { title: DOMPurify.sanitize(newTitle), cover: newCover, episodes: newEpisodes });
             hideSpinner();
 
             await init();
@@ -427,10 +424,13 @@
         }
 
         async function deleteSeries(seriesId) {
-            showSpinner();
-            await firebaseDB.deleteData(seriesId);
-            hideSpinner();
-            await init();
+            var series = seriesList.find(s => s.id === seriesId);
+            if (confirm(`[${series.title}] 을(를) 정말로 삭제하시겠습니까?`) == true) {
+                showSpinner();
+                await firebaseDB.deleteData(seriesId);
+                hideSpinner();
+                await init();
+            }
         }
 
     </script>
