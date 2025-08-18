@@ -1,4 +1,9 @@
-function loadSeries(series) {
+async function loadSeries(series) {
+    var bookmarks = [];
+    if (user) {
+        bookmarks = user.bookmarks || [];
+    }
+
     var episode_count = 0;
     series.episodes.forEach(ep => { if (ep.id > 0) episode_count++; });
     const last_episode = series.episodes.filter(ep => ep.id > 0).slice(-1)[0];
@@ -15,7 +20,7 @@ function loadSeries(series) {
                     <img id='series-cover-${series.id}' src="${series.cover}" width="100" />
                 </div>
                 <div class="col">
-                    <div id='series-title-${series.id}' class="fs-6 fw-bold mb-3">${series.title}</div>
+                    <div id='series-title-${series.id}' class="fs-6 fw-bold mb-3">${getBookmarkIcon(bookmarks, series.id)}${series.title}</div>
                     <div><span class="badge bg-primary mb-2">총 에피소드</span> <span id="episode-count-${series.id}"
                             class="badge">${episode_count}</span></div>
                     <div><span class="badge bg-primary">최근 업데이트</span> <span id="status-${series.id}"
@@ -64,7 +69,18 @@ function loadEpisode(series) {
             <tbody>
                 ${series.episodes.map(episode => {
         if (episode.id > 0) {
-            return `
+            if (user && user.viewed && user.viewed[series.id] && user.viewed[series.id].includes(episode.id)) {
+                return `
+            <tr data-id="${episode.id}" style="cursor: pointer;" onclick="location.href='read?series=${series.id}&episode=${episode.id}'">
+                <td class="text-center align-middle collapse drag-icon handle"><i class="bi bi-list"></i></td>
+                <td class="text-secondary-emphasis"><small>${episode.title}</small></td>
+                <td class="d-none d-md-table-cell text-center text-secondary-emphasis"><small>${episode.datetime.toISOString().split('T')[0]}</small></td>
+                <td class="text-center align-middle collapse delete-icon">
+                    <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+                </td>
+            </tr>`;
+            } else {
+                return `
             <tr data-id="${episode.id}" style="cursor: pointer;" onclick="location.href='read?series=${series.id}&episode=${episode.id}'">
                 <td class="text-center align-middle collapse drag-icon handle"><i class="bi bi-list"></i></td>
                 <td><small>${episode.title}</small></td>
@@ -73,6 +89,7 @@ function loadEpisode(series) {
                     <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
                 </td>
             </tr>`;
+            }
         } else {
             return `
             <tr data-id="${episode.id}">
@@ -183,17 +200,16 @@ function newHorizontalLine(seriesId) {
         var tbody = table.getElementsByTagName('tbody')[0];
         var tr = document.createElement('tr');
         tr.innerHTML = `
-                <td class="text-center align-middle handle bg-black"><i class="bi bi-list"></i></td>
-                <td class="bg-black">
-                    <div class="input-group input-group-sm">
-                        <input type="text" class="form-control" placeholder="구분선 내용" required/>
-                    </div>
-                </td>
-                <td class="d-none d-md-table-cell bg-black"></td>
-                <td class="text-center align-middle delete-icon bg-black">
-                    <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
-                </td>
-            `;
+        <td class="text-center align-middle handle bg-black"><i class="bi bi-list"></i></td>
+        <td class="bg-black">
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" placeholder="구분선 내용" required/>
+            </div>
+        </td>
+        <td class="d-none d-md-table-cell bg-black"></td>
+        <td class="text-center align-middle delete-icon bg-black">
+            <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+        </td>`;
         tbody.appendChild(tr);
     }
 }
@@ -262,4 +278,57 @@ function displayError(no, message) {
         <h1 class='fw-bold'>ERROR ${no}</h1>
         <span>${message}</span>
     </div>`;
+}
+
+function getBookmarkIcon(bookmarks, seriesId) {
+    if (user) {
+        if (bookmarks.includes(seriesId)) {
+            return `<i id="bookmark-${seriesId}" class="bi bi-star-fill text-warning" data-bookmarked="true"
+onclick="toggleBookmark(event, '${seriesId}')" style="cursor: pointer;"></i> `;
+        } else {
+            return `<i id="bookmark-${seriesId}" class="bi bi-star text-secondary" data-bookmarked="false"
+onclick="toggleBookmark(event, '${seriesId}')" style="cursor: pointer;"></i> `;
+        }
+    } else {
+        return '';
+    }
+}
+
+async function toggleBookmark(event = null, seriesId) {
+    if (user) {
+        var userInfo = JSON.parse(window.sessionStorage.getItem('googleUser'));
+        var bookmark = document.getElementById(`bookmark - ${seriesId} `);
+
+        if (bookmark.getAttribute('data-bookmarked') == "true") {
+            bookmark.classList.add('bi-star');
+            bookmark.classList.remove('bi-star-fill');
+            bookmark.classList.add('text-secondary');
+            bookmark.classList.remove('text-warning');
+            bookmark.setAttribute('data-bookmarked', 'false');
+            await firebaseDB.removeBookmark(userInfo.email, seriesId);
+
+            if (location.pathname.includes('bookmark')) {
+                location.reload();
+            }
+
+        } else {
+            bookmark.classList.remove('bi-star');
+            bookmark.classList.add('bi-star-fill');
+            bookmark.classList.remove('text-secondary');
+            bookmark.classList.add('text-warning');
+            bookmark.setAttribute('data-bookmarked', 'true');
+            await firebaseDB.addBookmark(userInfo.email, seriesId);
+        }
+    }
+}
+
+async function handleCredentialResponse(response) {
+    const token = response.credential;
+    const userInfo = parseJwt(token);
+    window.sessionStorage.setItem('googleUser', JSON.stringify(userInfo));
+    const user = await firebaseDB.getUser(userInfo.email);
+    if (!user) {
+        await firebaseDB.addUser(userInfo);
+    }
+    location.reload();
 }

@@ -16,10 +16,12 @@ if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
 
 var COLLECTION = "series";
 var LOG_COLLECTION = "logs";
+var USER_COLLECTION = "users";
 
 if (DEVMODE) {
     COLLECTION = "test_series";
     LOG_COLLECTION = "test_logs";
+    USER_COLLECTION = "test_users";
 }
 
 class FirebaseDB {
@@ -137,6 +139,101 @@ class FirebaseDB {
             await docRef.set({ timestamp: date, log: log });
         } catch (error) {
             console.error("Error recording log: ", error);
+        }
+    }
+
+    async getUser(email) {
+        try {
+            const docRef = this.db.collection(USER_COLLECTION).doc(email);
+            const docSnap = await docRef.get();
+
+            if (docSnap.exists) {
+                return { id: docSnap.id, ...docSnap.data() };
+            } else {
+                console.log("No such user!");
+                return null;
+            }
+        } catch (error) {
+            console.error("Error getting User Info: ", error);
+            return null;
+        }
+    }
+
+    async addUser(userInfo) {
+        try {
+            const docRef = this.db.collection(USER_COLLECTION).doc(userInfo.email);
+            await docRef.set({ userInfo: userInfo });
+            this.recordLog(new Date(), `User added [${docRef.id}]: ` + JSON.stringify(userInfo));
+            console.log("Document written with ID: ", docRef.id);
+            return docRef.id;
+
+        } catch (error) {
+            console.error("Error adding user: ", error);
+            return null;
+        }
+    }
+
+    async addBookmark(email, seriesId) {
+        try {
+            const user = await this.getUser(email);
+            if (!user) throw new Error("User not found");
+
+            const docRef = this.db.collection(USER_COLLECTION).doc(email);
+            await docRef.update({
+                bookmarks: firebase.firestore.FieldValue.arrayUnion(seriesId)
+            });
+            this.recordLog(new Date(), `Bookmark added [${seriesId}] for user [${email}]`);
+            console.log("Bookmark added for user: ", email);
+        } catch (error) {
+            console.error("Error adding bookmark: ", error);
+        }
+    }
+
+
+    async removeBookmark(email, seriesId) {
+        try {
+            const user = await this.getUser(email);
+            if (!user) throw new Error("User not found");
+
+            const docRef = this.db.collection(USER_COLLECTION).doc(email);
+            await docRef.update({
+                bookmarks: firebase.firestore.FieldValue.arrayRemove(seriesId)
+            });
+            this.recordLog(new Date(), `Bookmark removed [${seriesId}] for user [${email}]`);
+            console.log("Bookmark removed for user: ", email);
+        } catch (error) {
+            console.error("Error removing bookmark: ", error);
+        }
+    }
+
+    async addViewed(email, seriesId, episodeId) {
+        try {
+            const user = await this.getUser(email);
+            if (!user) throw new Error("User not found");
+
+            const docRef = this.db.collection(USER_COLLECTION).doc(email);
+            const docSnap = await docRef.get();
+            let viewed = {};
+
+            if (docSnap.exists && docSnap.data().viewed) {
+                viewed = docSnap.data().viewed;
+            }
+
+            if (!viewed[seriesId]) {
+                viewed[seriesId] = [];
+            }
+
+            // 중복 방지
+            if (!viewed[seriesId].includes(episodeId)) {
+                viewed[seriesId].push(episodeId);
+            }
+
+            await docRef.update({ viewed: viewed });
+
+            this.recordLog(new Date(), `Episode viewed [${seriesId}:${episodeId}] for user [${email}]`);
+            console.log("Episode viewed for user: ", email);
+        } catch (error) {
+            console.error("Error adding viewed episode: ", error);
         }
     }
 

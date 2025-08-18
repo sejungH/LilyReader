@@ -38,7 +38,7 @@
     <meta property="og:image:height" content="1024">
     <meta property="og:title" content="LILY READER">
     <meta property="og:description" content="대세는 백합 갤번역 리더기 by.LILYD3V">
-    <title>LilyReader</title>
+    <title>북마크 관리 - LilyReader</title>
 
     <style>
         input,
@@ -104,56 +104,8 @@
                     </button>
                 </li>
             </ul>
-            <button class="btn btn-sm btn-primary ms-auto" onclick="addNewSeries()"><i
-                    class="bi bi-plus-circle-fill"></i> 새 시리즈 추가</button>
         </div>
         <div class="accordion my-3" id="series-list"></div>
-    </div>
-
-    <div class="modal fade" id="newSeriesModal" tabindex="-1" aria-labelledby="newSeriesModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="newSeriesModalLabel">새 시리즈</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form onsubmit="saveNewSeries(); return false;">
-                    <div class="modal-body row">
-                        <div class="col-md-3 text-center">
-                            <img src="./images/cover_placeholder.png" alt="Cover Image" class="img-fluid mx-auto"
-                                id="cover-preview" style="max-width: 100%;" />
-                        </div>
-                        <div class="col-md-9 mt-3 mt-md-0">
-                            <p class="mb-2">시리즈</p>
-                            <div class="input-group input-group-sm mb-3">
-                                <span class="input-group-text">제목</span>
-                                <input type="text" id="input-series-title" class="form-control" placeholder="시리즈 제목"
-                                    required />
-                            </div>
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                                <input type="url" id="input-series-cover" class="form-control" placeholder="커버 이미지 URL"
-                                    onchange="previewCoverImage(this, 'cover-preview')" />
-                            </div>
-                            <p class="mt-4 mb-2">에피소드 목록</p>
-                            <div class="list-group list-group-flush" id="episode-list"></div>
-                            <div class="d-flex justify-content-center gap-2">
-                                <button type="button" class="btn btn-sm btn-success mt-2"
-                                    onclick="newEpisode('new-series')"><i class="bi bi-plus-circle-fill"></i> 에피소드
-                                    추가</button>
-                                <button type="button" class="btn btn-sm btn-light mt-2"
-                                    onclick="newHorizontalLine('new-series')"><i class="bi bi-plus-circle-fill"></i> 구분선
-                                    추가</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-                        <button type="submit" id="save-new-series" class="btn btn-primary">저장</button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 
     <footer class="bg-secondary-subtle mt-auto">
@@ -194,23 +146,22 @@
             hideSpinner();
             seriesList = [];
             data.forEach(d => {
-                let episodes = [];
-                for (const episodeData of d.episodes) {
-                    episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
+                if (user.bookmarks && user.bookmarks.includes(d.id)) {
+                    let episodes = [];
+                    for (const episodeData of d.episodes) {
+                        episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
+                    }
+                    seriesList.push({ id: d.id, title: d.title, cover: d.cover, episodes: episodes });
                 }
-                seriesList.push({ id: d.id, title: d.title, cover: d.cover, episodes: episodes });
             });
+
+
             sortSeries('datetime', false);
-
-            for (const series of seriesList) {
-                loadSeries(series);
+            if (seriesList.length > 0) {
+                for (const series of seriesList) {
+                    loadSeries(series);
+                }
             }
-
-            new Sortable(document.getElementById(`episode-list`), {
-                handle: '.handle',
-                animation: 150,
-                ghostClass: 'blue-background-class',
-            });
         }
 
         function reloadSeries() {
@@ -235,64 +186,6 @@
             document.querySelectorAll(`button[data-sortby]`).forEach(btn => { btn.classList.remove('active') });
             document.querySelector(`button[data-sortby="${sortBy}-${asc ? 'asc' : 'desc'}"]`).classList.add('active');
             document.getElementById('current-sort').innerHTML = document.querySelector(`button[data-sortby="${sortBy}-${asc ? 'asc' : 'desc'}"]`).innerHTML;
-        }
-
-        function addNewSeries() {
-            document.getElementById('episode-list').innerHTML = '';
-            newEpisode("new-series");
-            document.getElementById('input-series-title').value = '';
-            document.getElementById('input-series-cover').value = '';
-
-            document.getElementById('cover-preview').src = './images/cover_placeholder.png';
-
-            const newSeriesModal = document.getElementById('newSeriesModal');
-            let modal = bootstrap.Modal.getInstance(newSeriesModal);
-            if (!modal) {
-                modal = new bootstrap.Modal(newSeriesModal);
-            }
-            modal.show();
-        }
-
-        async function saveNewSeries() {
-            const newSeriesModal = document.getElementById('newSeriesModal');
-            let modal = bootstrap.Modal.getInstance(newSeriesModal);
-            if (!modal) {
-                modal = new bootstrap.Modal(newSeriesModal);
-            }
-            modal.hide();
-
-            showSpinner();
-            var title = document.getElementById('input-series-title').value;
-            var cover = document.getElementById('cover-preview').src;
-
-            var countlines = 0;
-            var newEpisodes = [];
-            for (var ep of document.getElementById('episode-list').querySelectorAll('input')) {
-                if (ep.type == 'url') {
-                    let json = JSON.parse(ep.getAttribute('data-episode'));
-                    newEpisodes.push({ id: json.id, title: json.title, datetime: new Date(json.datetime) });
-                } else if (ep.type == 'text') {
-                    let title = DOMPurify.sanitize(ep.value);
-                    countlines--;
-                    newEpisodes.push({ id: countlines, title: title, datetime: new Date() });
-                }
-            }
-
-            var seriesId = await firebaseDB.writeData({ title: DOMPurify.sanitize(title), cover: cover, episodes: newEpisodes });
-
-            if (seriesId) {
-                hideSpinner();
-                await init();
-
-                const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
-                    toggle: false
-                });
-                bsCollapse.show();
-
-                setTimeout(() => {
-                    document.getElementById(`series-${seriesId}`).scrollIntoView({ behavior: "smooth", block: "start" });
-                }, 300);
-            }
         }
 
         function editSeries(seriesId) {

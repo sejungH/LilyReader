@@ -18,6 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GP8PTD3TLS"></script>
+    <script async src="https://accounts.google.com/gsi/client" defer></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag() { dataLayer.push(arguments); }
@@ -26,6 +27,7 @@
     </script>
 
     <script src="./scripts/seriesController.js"></script>
+    <script src="./scripts/googleAuth.js"></script>
     <script src="./scripts/firebaseDB.js"></script>
     <script src="./scripts/functions.js"></script>
 
@@ -86,13 +88,14 @@
             </button>
             <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
                 <form class="ms-auto" role="search" onsubmit="return false;">
-                    <div class="d-flex dropdown">
-                        <input class="form-control me-2" type="search" placeholder="검색" aria-label="Search"
+                    <div class="d-flex dropdown position-relative">
+                        <input class="form-control" type="search" placeholder="검색" aria-label="Search"
                             autocomplete="off" oninput="showSuggestions(this.value)" size="40" />
-                        <ul class="dropdown-menu dropdown-menu-dark w-100 mt-5" id="autocomplete-list"
-                            style="max-height: 200px; overflow-y: auto;"></ul>
+                        <ul class="dropdown-menu dropdown-menu-dark w-100" id="autocomplete-list"
+                            style="max-height: 200px; overflow-y: auto; margin-top: 2.5rem;"></ul>
                     </div>
                 </form>
+                <div id="login_container" class="mt-2 mt-md-0 ms-0 ms-md-3"></div>
             </div>
         </div>
     </nav>
@@ -164,13 +167,17 @@
         const seriesId = urlParams.get('series');
         var episodeId;
         var series;
+        var user = null;
 
         init();
 
         async function init() {
+            user = await initUser();
+            initGoogleAuth();
+
             document.getElementById('series-list').innerHTML = '';
             const data = await firebaseDB.readDataById(seriesId);
-            console.log(data);
+            
             if (data) {
                 let episodes = [];
                 for (const episodeData of data.episodes) {
@@ -191,6 +198,7 @@
                 if (episode) {
                     for (let td of document.getElementById(`table-${seriesId}`).querySelector(`tr[data-id="${episodeId}"]`).children) {
                         td.classList.add('bg-primary')
+                        td.classList.remove('text-secondary-emphasis');
                     }
 
                     const content = await getContent(episodeId);
@@ -227,6 +235,11 @@
                         }
 
                     }
+
+                    if (user && (!user.viewed || !user.viewed[seriesId] || !user.viewed[seriesId].includes(episodeId))) {
+                        await firebaseDB.addViewed(user.id, seriesId, episodeId);
+                    }
+
                 } else {
                     document.querySelector('#content-container').innerHTML = `
                     <div class="w-100 text-center text-secondary my-5">
