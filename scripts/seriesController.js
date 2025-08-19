@@ -37,15 +37,13 @@ async function getEpisodeFromURL(url) {
 
 async function getContent(id) {
     try {
-        const response = await fetch(`https://corsproxy.io/?${getURL(id)}`, {
+        const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
         });
         const html = await response.text();
-
         if (html) {
-            console.log(html);
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             let content = doc.querySelector('.write_div');
@@ -90,7 +88,6 @@ function extractIDFromURL(url) {
 }
 
 function cleanUpContent(doc) {
-    console.log(doc);
     if (doc.querySelector('.dc_series')) {
         doc.querySelector('.dc_series').remove();
     }
