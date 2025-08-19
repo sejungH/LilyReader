@@ -17,7 +17,7 @@ async function getEpisodeFromURL(url) {
                 if (doc.querySelector('.gall_date')) {
                     dateString = doc.querySelector('.gall_date').getAttribute('title').replaceAll(' ', 'T');
                 } else {
-                    dateString = doc.querySelector('.ginfo2').querySelectorAll('li')[1].textContent.replaceAll(' ', 'T') + ':00';
+                    dateString = doc.querySelector('.ginfo2').querySelectorAll('li')[1].textContent.replaceAll(' ', 'T').replaceAll('.', '-') + ':00';
                 }
 
                 const date = new Date(dateString);
@@ -37,11 +37,7 @@ async function getEpisodeFromURL(url) {
 
 async function getContent(id) {
     try {
-        const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
+        const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`);
         const html = await response.text();
         if (html) {
             const parser = new DOMParser();
@@ -59,7 +55,25 @@ async function getContent(id) {
                 writer = doc.querySelector('.ginfo2').querySelectorAll('li')[0].firstChild.textContent;
             }
 
-            return { content: content.innerHTML, writer: writer };
+            let comments = [];
+            if (doc.querySelector('ul.all-comment-lst')) {
+                let id = 0;
+                let ul = doc.querySelector('ul.all-comment-lst');
+                ul.querySelectorAll('li.comment, li.comment-add').forEach(li => {
+                    let a = li.querySelector('a.nick');
+                    let nick = a.textContent;
+                    let comment = li.querySelector('p.txt');
+                    let datetime = li.querySelector('span.date').textContent;
+
+                    if (li.classList.contains('comment')) {
+                        comments.push({ id: id++, type: 'original', nickname: nick, comment: comment.innerHTML, datetime: datetime });
+                    } else if (li.classList.contains('comment-add')) {
+                        comments.push({ id: id++, type: 'reply', nickname: nick, comment: comment.innerHTML, datetime: datetime });
+                    }
+                });
+            }
+
+            return { content: content.innerHTML, writer: writer, comments: comments };
 
         } else {
             throw new Error("Fetching URL has failed");

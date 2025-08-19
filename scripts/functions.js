@@ -320,3 +320,19 @@ async function toggleBookmark(event = null, seriesId) {
         }
     }
 }
+
+async function loadDcCon(id, html) {
+    const match = html.match(/data-original="([^"]+)"/);
+    if (match) {
+        const googleScript = new GoogleScript();
+        const img = document.createElement('img');
+        const base64 = await googleScript.fetchBase64Image(match[1]);
+        img.src = base64;
+        img.width = 100;
+        img.height = 100;
+        img.alt = '디시콘';
+        document.getElementById(`comment-${id}`).appendChild(img);
+    } else {
+        document.getElementById(`comment-${id}`).innerHTML = html;
+    }
+}

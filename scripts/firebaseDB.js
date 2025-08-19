@@ -10,7 +10,7 @@ const FIREBASE_CONFIG = {
 };
 
 let DEVMODE = false;
-if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+if (location.hostname === "localhost" || location.hostname === "10.0.0.77") {
     DEVMODE = true;
 }
 

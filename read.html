@@ -26,9 +26,10 @@
         gtag('config', 'G-GP8PTD3TLS');
     </script>
 
-    <script src="./scripts/seriesController.js"></script>
-    <script src="./scripts/googleAuth.js"></script>
     <script src="./scripts/firebaseDB.js"></script>
+    <script src="./scripts/googleScript.js"></script>
+    <script src="./scripts/googleAuth.js"></script>
+    <script src="./scripts/seriesController.js"></script>
     <script src="./scripts/functions.js"></script>
 
     <link rel="icon" type="image/x-icon" href="./icons/favicon.ico">
@@ -64,8 +65,30 @@
             text-indent: 0;
         }
 
-        #episode-content img {
-            max-width: 100%;
+        @media (max-width: 768px) {
+            #episode-content img {
+                width: calc(100% + 2rem);
+                /* p-3 좌우 padding 보정 */
+                margin: auto -1rem;
+                /* 패딩 무시 */
+            }
+        }
+
+        /* PC: 이미지 가운데 정렬 */
+        @media (min-width: 769px) {
+            #episode-content img {
+                width: auto;
+                max-width: 100%;
+                margin: auto auto;
+                display: block;
+            }
+        }
+
+        #episode-content iframe,
+        #episode-content embed {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            height: 100%;
         }
 
         input,
@@ -125,7 +148,7 @@
                     <span class="badge bg-secondary">글쓴이</span> <span id="episode-writer" class="badge me-4"></span>
                     <span class="badge bg-secondary">작성일</span> <span id="episode-date" class="badge"></span>
                 </div>
-                <div id="episode-content"></div>
+                <div id="episode-content" class="overflow-x-hidden"></div>
             </div>
             <div class="row pt-3 border-top">
                 <div class="col-3">
@@ -138,8 +161,8 @@
                 </div>
             </div>
         </div>
+        <div id="comment-container" class="mt-4"></div>
     </div>
-    <p id="test"></p>
 
     <footer class="bg-secondary-subtle mt-auto">
         <div class="container-md py-4 text-center">
@@ -160,8 +183,6 @@
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
-        document.getElementById('test').innerText = urlParams.get('dev');
-        
         if (urlParams.get('dev') && urlParams.get('dev') == "true") {
             eruda.init();
         }
@@ -210,6 +231,27 @@
                     document.getElementById('episode-content').innerHTML = content.content;
                     document.getElementById('episode-writer').innerText = content.writer;
                     document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
+
+                    if (content.comments.length > 0) {
+                        document.getElementById('comment-container').innerHTML = `<span class='fw-bold my-2'>전체 댓글 ${content.comments.length}개</span>`;
+                    }
+                    content.comments.forEach(comment => {
+                        const commentDiv = document.createElement('div');
+                        if (comment.type === 'reply') {
+                            commentDiv.className = 'card my-2 ms-4 bg-secondary-subtle';
+                        } else {
+                            commentDiv.className = 'card my-2';
+                        }
+                        commentDiv.innerHTML = `
+                            <div class="card-body">
+                                <span class="fw-bold">${comment.nickname}</span>
+                                <p id="comment-${comment.id}" class="card-text py-2"></p>
+                                <footer class="blockquote-footer mb-0">${comment.datetime}</footer>
+                            </div>
+                        `;
+                        document.getElementById('comment-container').appendChild(commentDiv);
+                        loadDcCon(comment.id, comment.comment);
+                    });
 
                     var filteredEpisodes = series.episodes.filter(ep => ep.id > 0);
                     for (let btn of document.getElementsByClassName('prev-episode')) {
