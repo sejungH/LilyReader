@@ -45,6 +45,7 @@ async function getContent(id) {
         const html = await response.text();
 
         if (html) {
+            console.log(html);
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             let content = doc.querySelector('.write_div');
@@ -89,6 +90,7 @@ function extractIDFromURL(url) {
 }
 
 function cleanUpContent(doc) {
+    console.log(doc);
     if (doc.querySelector('.dc_series')) {
         doc.querySelector('.dc_series').remove();
     }
