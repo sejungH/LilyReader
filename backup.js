@@ -16,7 +16,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // 백업할 컬렉션 이름 배열
-const collectionsToBackup = ["series"]; // 여기에 실제 컬렉션 이름 입력
+const collectionsToBackup = ["series", "users", "logs"]; // 여기에 실제 컬렉션 이름 입력
 
 async function backupCollections() {
   for (const colName of collectionsToBackup) {

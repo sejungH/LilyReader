@@ -1,10 +1,7 @@
-
-
 function initGoogleAuth() {
-    var googleUser = window.sessionStorage.getItem('googleUser');
 
     const login_container = document.getElementById('login_container');
-    if (!googleUser) {
+    if (!user) {
         login_container.innerHTML = `
         <button class="btn btn-outline-light rounded-pill d-flex align-items-center justify-content-center gap-1 w-100 w-md-auto px-3"
             type="button" onclick="login()">
@@ -13,13 +10,12 @@ function initGoogleAuth() {
         </button>`;
 
     } else {
-        var userInfo = JSON.parse(googleUser);
         login_container.classList.add('position-relative');
         login_container.innerHTML = `
-        <button class="btn btn-outline-light rounded-pill d-flex align-items-center justify-content-center gap-1 w-100 w-md-auto px-2"
+        <button class="btn btn-outline-light rounded-pill d-flex align-items-center justify-content-center gap-1 w-100 w-md-auto px-3"
             type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <img src="${userInfo.picture}" alt="Profile Picture" class="rounded-circle" style="height:1.6rem; width:1.6rem; object-fit:cover;"/>
-            <span class="text-uppercase"><small>${userInfo.given_name}</small></span>
+            <img src="${user.userInfo.picture}" alt="Profile Picture" class="rounded-circle" style="height:1.6rem; width:1.6rem; object-fit:cover;"/>
+            <span class="text-uppercase"><small>${user.userInfo.name}</small></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-md-end w-100 w-md-auto">
             <li><a class="dropdown-item text-center" href="bookmark"><small><i class="bi bi-star-fill text-warning"></i> 북마크 관리</small></a></li>
@@ -42,7 +38,7 @@ function login() {
                 });
 
                 const userInfo = await res.json();
-                window.sessionStorage.setItem("googleUser", JSON.stringify(userInfo));
+                localStorage.setItem("googleUser", JSON.stringify(userInfo));
 
                 const user = await firebaseDB.getUser(userInfo.email);
                 if (!user) {
@@ -59,17 +55,6 @@ function login() {
     client.requestAccessToken();
 }
 
-async function handleCredentialResponse(response) {
-    const token = response.code;
-    const userInfo = parseJwt(token);
-    window.sessionStorage.setItem('googleUser', JSON.stringify(userInfo));
-    const user = await firebaseDB.getUser(userInfo.email);
-    if (!user) {
-        await firebaseDB.addUser(userInfo);
-    }
-    location.reload();
-}
-
 function parseJwt(token) {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -82,8 +67,8 @@ function parseJwt(token) {
 
 async function initUser() {
     const firebaseDB = new FirebaseDB();
-    if (window.sessionStorage.getItem('googleUser')) {
-        var userInfo = JSON.parse(window.sessionStorage.getItem('googleUser'));
+    if (localStorage.getItem('googleUser')) {
+        var userInfo = JSON.parse(localStorage.getItem('googleUser'));
         var user = await firebaseDB.getUser(userInfo.email);
         return user;
     } else {
@@ -92,6 +77,6 @@ async function initUser() {
 }
 
 function logout() {
-    window.sessionStorage.removeItem('googleUser');
+    localStorage.removeItem('googleUser');
     location.reload();
 }

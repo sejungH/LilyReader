@@ -152,7 +152,7 @@
             hideSpinner();
             seriesList = [];
             data.forEach(d => {
-                if (user.bookmarks && user.bookmarks.includes(d.id)) {
+                if (user && user.bookmarks && user.bookmarks.includes(d.id)) {
                     let episodes = [];
                     for (const episodeData of d.episodes) {
                         episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
@@ -160,7 +160,6 @@
                     seriesList.push({ id: d.id, title: d.title, cover: d.cover, episodes: episodes });
                 }
             });
-
 
             sortSeries('datetime', false);
             if (seriesList.length > 0) {

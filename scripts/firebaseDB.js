@@ -229,8 +229,6 @@ class FirebaseDB {
             }
 
             await docRef.update({ viewed: viewed });
-
-            this.recordLog(new Date(), `Episode viewed [${seriesId}:${episodeId}] for user [${email}]`);
             console.log("Episode viewed for user: ", email);
         } catch (error) {
             console.error("Error adding viewed episode: ", error);

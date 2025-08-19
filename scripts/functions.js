@@ -296,7 +296,6 @@ onclick="toggleBookmark(event, '${seriesId}')" style="cursor: pointer;"></i> `;
 
 async function toggleBookmark(event = null, seriesId) {
     if (user) {
-        var userInfo = JSON.parse(window.sessionStorage.getItem('googleUser'));
         var bookmark = document.getElementById(`bookmark-${seriesId}`);
 
         if (bookmark.getAttribute('data-bookmarked') == "true") {
@@ -305,7 +304,7 @@ async function toggleBookmark(event = null, seriesId) {
             bookmark.classList.add('text-secondary');
             bookmark.classList.remove('text-warning');
             bookmark.setAttribute('data-bookmarked', 'false');
-            await firebaseDB.removeBookmark(userInfo.email, seriesId);
+            await firebaseDB.removeBookmark(user.id, seriesId);
 
             if (location.pathname.includes('bookmark')) {
                 location.reload();
@@ -317,7 +316,7 @@ async function toggleBookmark(event = null, seriesId) {
             bookmark.classList.remove('text-secondary');
             bookmark.classList.add('text-warning');
             bookmark.setAttribute('data-bookmarked', 'true');
-            await firebaseDB.addBookmark(userInfo.email, seriesId);
+            await firebaseDB.addBookmark(user.id, seriesId);
         }
     }
 }
