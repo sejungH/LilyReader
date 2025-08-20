@@ -1,3 +1,13 @@
+const TAGS = ["연재중", "완결(完)", "라노벨", "코믹스", "웹툰", "창작", "모음집"];
+
+function convertSeries(data) {
+    let episodes = [];
+    for (const episodeData of data.episodes) {
+        episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
+    }
+    return { id: data.id, title: data.title, cover: data.cover, tags: data.tags ? data.tags : [], episodes: episodes };
+}
+
 async function getEpisodeFromURL(url) {
     try {
         const id = extractIDFromURL(url);
@@ -61,14 +71,16 @@ async function getContent(id) {
                 let ul = doc.querySelector('ul.all-comment-lst');
                 ul.querySelectorAll('li.comment, li.comment-add').forEach(li => {
                     let a = li.querySelector('a.nick');
-                    let nick = a.textContent;
-                    let comment = li.querySelector('p.txt');
-                    let datetime = li.querySelector('span.date').textContent;
+                    if (a) {
+                        let nick = a.textContent;
+                        let comment = li.querySelector('p.txt');
+                        let datetime = li.querySelector('span.date').textContent;
 
-                    if (li.classList.contains('comment')) {
-                        comments.push({ id: id++, type: 'original', nickname: nick, comment: comment.innerHTML, datetime: datetime });
-                    } else if (li.classList.contains('comment-add')) {
-                        comments.push({ id: id++, type: 'reply', nickname: nick, comment: comment.innerHTML, datetime: datetime });
+                        if (li.classList.contains('comment')) {
+                            comments.push({ id: id++, type: 'original', nickname: nick, comment: comment.innerHTML, datetime: datetime });
+                        } else if (li.classList.contains('comment-add')) {
+                            comments.push({ id: id++, type: 'reply', nickname: nick, comment: comment.innerHTML, datetime: datetime });
+                        }
                     }
                 });
             }

@@ -246,57 +246,57 @@
             const data = await firebaseDB.readDataById(seriesId);
 
             if (data) {
-                let episodes = [];
-                for (const episodeData of data.episodes) {
-                    episodes.push({ id: episodeData.id, title: episodeData.title, datetime: new Date(episodeData.datetime.seconds * 1000) });
-                }
-                series = { id: data.id, title: data.title, cover: data.cover, episodes: episodes };
+                series = convertSeries(data);
 
+                var filteredEpisodes = series.episodes.filter(ep => ep.id > 0);
+                
                 if (urlParams.has('episode')) {
                     episodeId = Number.parseInt(urlParams.get('episode'));
                 } else {
-                    episodeId = series.episodes[0].id;
+                    episodeId = filteredEpisodes.length > 0 ? filteredEpisodes[0].id : null;
                 }
 
                 await loadSeries(series);
                 document.getElementById('breadcrumb-title').innerText = series.title;
 
-                const episode = series.episodes.find(ep => ep.id === episodeId);
+                const episode = filteredEpisodes.find(ep => ep.id === episodeId);
                 if (episode) {
                     for (let td of document.getElementById(`table-${seriesId}`).querySelector(`tr[data-id="${episodeId}"]`).children) {
                         td.classList.add('bg-primary')
                         td.classList.remove('text-secondary-emphasis');
                     }
 
-                    const content = await getContent(episodeId);
-                    document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
-                    document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${getURL(episodeId)}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
-                    document.getElementById('episode-content').innerHTML = content.content;
-                    document.getElementById('episode-writer').innerText = content.writer;
-                    document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
+                    if (document.getElementById('episode-content').innerHTML == "") {
+                        const content = await getContent(episodeId);
+                        document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
+                        document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${getURL(episodeId)}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
+                        document.getElementById('episode-content').innerHTML = content.content;
+                        document.getElementById('episode-writer').innerText = content.writer;
+                        document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
 
-                    if (content.comments.length > 0) {
-                        document.getElementById('comment-container').innerHTML = `<span class='fw-bold my-2'>전체 댓글 ${content.comments.length}개</span>`;
-                    }
-                    content.comments.forEach(comment => {
-                        const commentDiv = document.createElement('div');
-                        if (comment.type === 'reply') {
-                            commentDiv.className = 'card my-2 ms-4 bg-secondary-subtle';
-                        } else {
-                            commentDiv.className = 'card my-2';
+                        if (content.comments.length > 0) {
+                            document.getElementById('comment-container').innerHTML = `<span class='fw-bold my-2'>전체 댓글 ${content.comments.length}개</span>`;
                         }
-                        commentDiv.innerHTML = `
+                        content.comments.forEach(comment => {
+                            const commentDiv = document.createElement('div');
+                            if (comment.type === 'reply') {
+                                commentDiv.className = 'card my-2 ms-4 bg-secondary-subtle';
+                            } else {
+                                commentDiv.className = 'card my-2';
+                            }
+                            commentDiv.innerHTML = `
                             <div class="card-body">
                                 <span class="fw-bold">${comment.nickname}</span>
                                 <p id="comment-${comment.id}" class="card-text py-2"></p>
                                 <footer class="blockquote-footer mb-0">${comment.datetime}</footer>
                             </div>
                         `;
-                        document.getElementById('comment-container').appendChild(commentDiv);
-                        loadDcCon(comment.id, comment.comment);
-                    });
+                            document.getElementById('comment-container').appendChild(commentDiv);
+                            loadDcCon(comment.id, comment.comment);
+                        });
+                    }
 
-                    var filteredEpisodes = series.episodes.filter(ep => ep.id > 0);
+                    
                     for (let btn of document.getElementsByClassName('prev-episode')) {
                         const episodeIndex = filteredEpisodes.findIndex(ep => ep.id === episodeId);
 
@@ -342,136 +342,6 @@
             }
 
             hideSpinner();
-        }
-
-        function editSeries(seriesId) {
-            var series_title = document.getElementById(`series-title-${seriesId}`);
-            series_title.innerHTML = `
-                <div class='input-group input-group-sm'>
-                    <span class='input-group-text'><i class="bi bi-pencil-fill"></i></span>
-                    <input type="text" id="input-edit-series-title-${seriesId}" class='form-control' value="${series.title}" required />
-                </div>`;
-            series_title.innerHTML += `
-                <div class='input-group input-group-sm mt-2'>
-                    <span class='input-group-text'><i class="bi bi-image"></i></span>
-                    <input type="url" id="input-edit-series-cover-${seriesId}" class='form-control' value="${series.cover}" onchange="previewCoverImage(this, 'series-cover-${series.id}')" />
-                </div>`;
-            var table = document.getElementById(`table-${seriesId}`);
-            for (var icon of table.getElementsByClassName('drag-icon')) {
-                icon.classList.toggle('collapse');
-            }
-            for (var icon of table.getElementsByClassName('delete-icon')) {
-                icon.classList.toggle('collapse');
-            }
-
-            newEpisode(seriesId);
-
-            var tfoot = table.getElementsByTagName('tfoot')[0];
-            tfoot.classList.toggle('collapse');
-
-            document.getElementById(`btn-edit-series-${seriesId}`).classList.add('collapse')
-            document.getElementById(`btn-close-edit-series-${seriesId}`).classList.toggle('collapse');
-            document.getElementById(`btn-save-series-${seriesId}`).classList.toggle('collapse');
-            document.getElementById(`btn-delete-series-${seriesId}`).classList.toggle('collapse');
-
-            table.querySelectorAll('tbody tr').forEach(tr => {
-                tr.removeAttribute('onclick');
-            });
-
-            document.querySelectorAll('.accordion-button').forEach(button => {
-                button.removeAttribute('data-bs-toggle');
-            });
-        }
-
-        function closeEdit(seriesId) {
-            var series_title = document.getElementById(`series-title-${seriesId}`);
-            series_title.innerHTML = series.title;
-            var series_cover = document.getElementById(`series-cover-${seriesId}`);
-            series_cover.src = series.cover;
-            document.getElementById(`btn-delete-series-${seriesId}`).classList.toggle('collapse');
-
-            document.querySelectorAll('.accordion-button').forEach(button => {
-                button.setAttribute('data-bs-toggle', 'collapse');
-            });
-
-            if (series.id === seriesId)
-                loadEpisode(series);
-        }
-
-        async function saveSeries(seriesId) {
-            showSpinner();
-            var newTitle = document.getElementById(`input-edit-series-title-${seriesId}`).value;
-            var newCover = document.getElementById(`series-cover-${seriesId}`).src;
-
-            var newEpisodes = [];
-            var tbody = document.getElementById(`table-${seriesId}`).getElementsByTagName('tbody')[0];
-            var countlines = 0;
-            series.episodes.forEach(ep => { if (ep.id < 0) countlines--; });
-            for (let tr of tbody.getElementsByTagName('tr')) {
-                if (tr.hasAttribute('data-id')) {
-                    let id = tr.getAttribute('data-id');
-                    series.episodes.forEach(ep => {
-                        if (ep.id == id) {
-                            newEpisodes.push(ep);
-                        }
-                    });
-                } else {
-                    let episodeInput = tr.querySelector('input[type="url"]');
-                    if (episodeInput && episodeInput.hasAttribute('data-episode')) {
-                        let json = JSON.parse(episodeInput.getAttribute('data-episode'));
-                        newEpisodes.push({ id: json.id, title: json.title, datetime: new Date(json.datetime) });
-                    }
-
-                    let lineInput = tr.querySelector('input[type="text"]');
-                    if (lineInput) {
-                        countlines--;
-                        newEpisodes.push({ id: countlines, title: DOMPurify.sanitize(lineInput.value), datetime: new Date() });
-                    }
-                }
-            }
-
-            await firebaseDB.updateData(series.id, { title: DOMPurify.sanitize(newTitle), cover: newCover, episodes: newEpisodes });
-            hideSpinner();
-
-            await init();
-            const bsCollapse = new bootstrap.Collapse(`#flush-collapse-${seriesId}`, {
-                toggle: false // 초기 상태를 유지
-            });
-            bsCollapse.show(); // 강제로 아코디언 열기
-        }
-
-        async function getTitle(input) {
-            const url = input.value;
-            const match = url.match(/https:\/\/(gall\.dcinside\.com\/|m\.dcinside\.com\/)/);
-
-            if (match) {
-                var title = input.parentElement.parentElement.children[0];
-                var spinner = input.parentElement.parentElement.children[1]
-
-                title.firstChild.innerText = "불러오는 중...";
-                spinner.classList.remove('visually-hidden');
-                document.getElementById(`btn-save-series-${seriesId}`).disabled = true;
-
-                const episode = await getEpisodeFromURL(url);
-                if (episode instanceof Object) {
-                    title.firstChild.innerText = episode.title;
-                    spinner.classList.add('visually-hidden');
-                    input.setAttribute('data-episode', JSON.stringify(episode));
-                } else {
-                    title.firstChild.innerText = "제목을 불러오는 데 실패했습니다.";
-                    spinner.classList.add('visually-hidden');
-                }
-                document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
-            }
-        }
-
-        async function deleteSeries(seriesId) {
-            if (confirm(`[${series.title}] 을(를) 정말로 삭제하시겠습니까?`) == true) {
-                showSpinner();
-                await firebaseDB.deleteData(seriesId);
-                hideSpinner();
-                location.href = './';
-            }
         }
 
         function setParagraphStyle() {
