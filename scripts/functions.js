@@ -45,6 +45,13 @@ async function loadSeries(series) {
         this.src = './images/cover_placeholder.png';
     };
 
+    document.getElementById(`flush-collapse-${series.id}`).addEventListener('shown.bs.collapse', function () {
+        const header = document.getElementById(`series-header-${series.id}`);
+        if (header) {
+            header.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+
     new Sortable(document.getElementById(`table-${series.id}`).getElementsByTagName('tbody')[0], {
         handle: '.handle',
         animation: 150,

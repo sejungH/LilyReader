@@ -135,6 +135,7 @@ function cleanUpContent(doc) {
 
         if (img.hasAttribute('data-original')) {
             img.setAttribute('src', img.getAttribute('data-original'));
+            img.setAttribute('loading', 'lazy');
             img.removeAttribute('data-original');
         }
     }
