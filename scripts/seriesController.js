@@ -1,4 +1,4 @@
-const TAGS = ["연재중", "완결(完)", "라노벨", "코믹스", "웹툰", "창작", "모음집"];
+const TAGS = ["만화", "소설", "웹툰", "연재중", "완결(完)", "모음집", "창작"];
 
 function convertSeries(data) {
     let episodes = [];
@@ -26,7 +26,7 @@ async function getEpisodeFromURL(url) {
                 let dateString;
                 if (doc.querySelector('.gall_date')) {
                     dateString = doc.querySelector('.gall_date').getAttribute('title').replaceAll(' ', 'T');
-                } else {
+                } else if (doc.querySelector('.ginfo2')) {
                     dateString = doc.querySelector('.ginfo2').querySelectorAll('li')[1].textContent.replaceAll(' ', 'T').replaceAll('.', '-') + ':00';
                 }
 
@@ -61,7 +61,7 @@ async function getContent(id) {
             let writer;
             if (doc.querySelector('.nickname')) {
                 writer = doc.querySelector('.nickname').title;
-            } else {
+            } else if (doc.querySelector('.ginfo2')) {
                 writer = doc.querySelector('.ginfo2').querySelectorAll('li')[0].firstChild.textContent;
             }
 
@@ -93,6 +93,35 @@ async function getContent(id) {
 
     } catch (error) {
         console.error("Error fetching Content from URL:", error);
+        return error;
+    }
+}
+
+async function getEpisodesFromSeries(id) {
+    try {
+        const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`);
+        const html = await response.text();
+        if (html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            let episodes = [];
+            const dc_series = doc.querySelectorAll('.dc_series');
+            if (dc_series) {
+                const links = Array.from(dc_series).flatMap(series => Array.from(series.querySelectorAll('a')).filter(a => a.href.includes('lilyfever')));
+                const episodePromises = links.map(async a => {
+                    const episode = await getEpisodeFromURL(a.href);
+                    return episode;
+                });
+                episodes = await Promise.all(episodePromises);
+            }
+            return episodes;
+
+        } else {
+            throw new Error("Fetching URL has failed");
+        }
+    } catch (error) {
+        console.error("Error fetching episodes from URL:", error);
         return error;
     }
 }
@@ -155,7 +184,6 @@ function cleanUpContent(doc) {
     var html = doc.innerHTML;
 
     html = html.replaceAll('\n', '');
-    html = html.replace(/(<p( style="[0-9a-zA-Z\-\:\;]+")*>(<br>)?<\/p>){2,}/g, '<p><br></p>');
     doc.innerHTML = html;
 
     return doc;

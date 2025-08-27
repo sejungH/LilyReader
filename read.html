@@ -54,7 +54,7 @@
             font-family: 'RIDIBatang', sans-serif;
         }
 
-        #episode-content p {
+        #episode-content {
             text-indent: 1rem;
         }
 
@@ -67,6 +67,15 @@
                 width: calc(100% + 2rem);
                 margin: auto -1rem;
             }
+
+            #manga-title {
+                font-size: 0.8rem;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         }
 
         /* PC: 이미지 가운데 정렬 */
@@ -76,6 +85,10 @@
                 max-width: 100%;
                 margin: auto auto;
                 display: block;
+            }
+
+            #manga-title {
+                font-size: 1rem;
             }
         }
 
@@ -88,7 +101,8 @@
 
         input,
         textarea,
-        select {
+        select,
+        button {
             touch-action: manipulation;
         }
 
@@ -104,6 +118,16 @@
             font-size: 0.8rem;
             padding-left: 0;
             padding-right: 0;
+        }
+
+        #manga-container img {
+            min-width: 50%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #manga-view img[src=""] {
+            opacity: 0;
         }
     </style>
 </head>
@@ -158,7 +182,7 @@
                     <span class="badge bg-secondary">글쓴이</span> <span id="episode-writer" class="badge me-4"></span>
                     <span class="badge bg-secondary">작성일</span> <span id="episode-date" class="badge"></span>
                 </div>
-                <div id="toolbar-top" class="d-flex gap-0 gap-md-5 py-2 mb-3 justify-content-center">
+                <div class="d-flex gap-0 gap-md-5 py-2 mb-3 justify-content-center">
                     <div class="d-flex align-items-center">
                         <img src="./icons/font-size.svg" class="icon me-1">
                         <div class="input-group input-group-sm">
@@ -170,7 +194,7 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center">
-                        <img src="./icons/line-height.svg" class="icon ms-2 me-1">
+                        <img src="./icons/line-height.svg" class="icon ms-3 me-1">
                         <div class="input-group input-group-sm">
                             <button type="button" class="btn btn-outline-secondary"
                                 onclick="changeLineHeight(-0.1)">-</button>
@@ -180,7 +204,7 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-center">
-                        <img src="./icons/p-margin.svg" class="icon ms-2 me-1">
+                        <img src="./icons/p-margin.svg" class="icon ms-3 me-1">
                         <div class="input-group input-group-sm">
                             <button type="button" class="btn btn-outline-secondary"
                                 onclick="changeParagraphMargin(-0.2)">-</button>
@@ -191,6 +215,46 @@
                     </div>
                 </div>
                 <div id="episode-content" class="overflow-x-hidden"></div>
+                <div id="manga-container"
+                    class="position-absolute start-0 end-0 top-0 bottom-0 overflow-hidden bg-secondary-subtle p-0 z-2 visually-hidden">
+                    <div id="manga-view" class="d-flex justify-content-center align-items-center h-100">
+                        <img id="manga-image-1" /><img id="manga-image-2" />
+                    </div>
+                    <div class="position-absolute top-0 bottom-0 start-0" style="width: 30vw" onclick="mangaLeft()">
+                    </div>
+                    <div class="position-absolute top-0 bottom-0 start-50 translate-middle-x" style="width: 40vw"
+                        onclick="toggleMangaToolbar()"></div>
+                    <div class="position-absolute top-0 bottom-0 end-0" style="width: 30vw" onclick="mangaRight()">
+                    </div>
+                    <div class="manga-toolbar d-flex align-items-center position-absolute top-0 w-100 bg-dark p-3 z-5">
+                        <span id="manga-title" class="fw-bold"></span>
+                        <button id="btn-manga-view" class="btn ms-auto fs-4 py-0"
+                            onclick="toggleMangaView(this)"></button>
+                        <button id="btn-manga-direction" class="btn ms-2 ms-md-3 fs-4 py-0"
+                            onclick="toggleMangaDirection(this)"></button>
+                        <button id="btn-manga-start" class="btn ms-2 ms-md-3 fs-4 py-0 d-flex" data-start="12"
+                            onclick="toggleMangaStart(this)">
+                            <img src="./icons/manga-12.svg" id="icon-manga-start"
+                                style="width: 1.8rem; opacity: 0.9;" />
+                        </button>
+                        <button class="btn ms-2 ms-md-3 fs-4 py-0" onclick="closeMangaView()"><i
+                                class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="manga-toolbar position-absolute bottom-0 w-100 z-4">
+                        <div class="progress w-100 rounded-0" style="height: 5px;">
+                            <div id="manga-progress" class="progress-bar" role="progressbar" aria-valuenow="0"
+                                aria-valuemin="0"></div>
+                        </div>
+                        <div class="d-flex bg-dark p-3">
+                            <button id="btn-prev-episode" class="btn btn-sm btn-outline-light rounded-pill px-3"><i
+                                    class="bi bi-caret-left-fill"></i>
+                                이전화</button>
+                            <button id="btn-next-episode"
+                                class="btn btn-sm btn-outline-light rounded-pill px-3 ms-auto">다음화 <i
+                                    class="bi bi-caret-right-fill"></i></button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="row justify-content-between pt-3 border-top">
                 <div class="col-auto">
@@ -232,9 +296,13 @@
 
         const firebaseDB = new FirebaseDB();
         const seriesId = urlParams.get('series');
+        const view = urlParams.get('view');
         var episodeId;
         var series;
         var user = null;
+
+        var mangaImages = [];
+        var currPage = 0;
 
         init();
 
@@ -249,7 +317,7 @@
                 series = convertSeries(data);
 
                 var filteredEpisodes = series.episodes.filter(ep => ep.id > 0);
-                
+
                 if (urlParams.has('episode')) {
                     episodeId = Number.parseInt(urlParams.get('episode'));
                 } else {
@@ -296,7 +364,7 @@
                         });
                     }
 
-                    
+
                     for (let btn of document.getElementsByClassName('prev-episode')) {
                         const episodeIndex = filteredEpisodes.findIndex(ep => ep.id === episodeId);
 
@@ -330,6 +398,19 @@
 
                     setParagraphStyle();
 
+                    document.getElementById('episode-content').querySelectorAll('img').forEach((img, index) => {
+                        img.id = `image-${index}`;
+                        img.addEventListener('click', () => {
+                            currPage = index;
+                            openMangaView();
+                        });
+                        mangaImages.push(img.src);
+                    });
+
+                    if (view && view === "manga" && mangaImages.length > 0) {
+                        openMangaView();
+                    }
+
                 } else {
                     document.querySelector('#content-container').innerHTML = `
                     <div class="w-100 text-center text-secondary my-5">
@@ -353,10 +434,14 @@
             document.getElementById('input-line-height').innerText = lineHeight;
             document.getElementById('input-paragraph-margin').innerText = paragraphMargin;
 
-            document.getElementById('episode-content').style.fontSize = fontSize + 'rem';
-            document.getElementById('episode-content').style.lineHeight = lineHeight + 'rem';
-            document.getElementById('episode-content').style.marginTop = paragraphMargin + 'rem';
-            document.getElementById('episode-content').style.marginBottom = paragraphMargin + 'rem';
+            document.getElementById('episode-content').querySelectorAll('*').forEach(el => {
+                if (el.textContent.trim()) {
+                    el.style.fontSize = fontSize + 'rem';
+                    el.style.lineHeight = lineHeight + 'rem';
+                    el.style.marginTop = paragraphMargin + 'rem';
+                    el.style.marginBottom = paragraphMargin + 'rem';
+                }
+            });
         }
 
         function changeFontSize(delta) {
@@ -365,8 +450,10 @@
             value = Number(value.toFixed(2));
             input.innerText = value;
             var content = document.getElementById('episode-content');
-            content.querySelectorAll('p').forEach(p => {
-                p.style.fontSize = value + 'rem';
+            content.querySelectorAll('*').forEach(el => {
+                if (el.textContent.trim()) {
+                    el.style.fontSize = value + 'rem';
+                }
             });
             localStorage.setItem('fontSize', value);
         }
@@ -377,8 +464,10 @@
             value = Number(value.toFixed(2));
             input.innerText = value;
             var content = document.getElementById('episode-content');
-            content.querySelectorAll('p').forEach(p => {
-                p.style.lineHeight = value + 'rem';
+            content.querySelectorAll('*').forEach(el => {
+                if (el.textContent.trim()) {
+                    el.style.lineHeight = value + 'rem';
+                }
             });
             localStorage.setItem('lineHeight', value);
         }
@@ -389,11 +478,192 @@
             value = Number(value.toFixed(2));
             input.innerText = value;
             var content = document.getElementById('episode-content');
-            content.querySelectorAll('p').forEach(p => {
-                p.style.marginTop = value + 'rem';
-                p.style.marginBottom = value + 'rem';
+            content.querySelectorAll('*').forEach(el => {
+                if (el.textContent.trim()) {
+                    el.style.marginTop = value + 'rem';
+                    el.style.marginBottom = value + 'rem';
+                }
             });
             localStorage.setItem('paragraphMargin', value);
+        }
+
+        function openMangaView() {
+            document.getElementById('manga-container').classList.remove('visually-hidden');
+            document.getElementById('episode-content').classList.add('visually-hidden');
+            document.getElementById('comment-container').classList.add('visually-hidden');
+
+            const mangaView = localStorage.getItem('mangaView') || 'double';
+            const mangaDirection = localStorage.getItem('mangaDirection') || 'ltr';
+            document.getElementById('btn-manga-view').innerHTML = mangaView === 'single' ? '<i class="bi bi-book-half"></i>' : '<i class="bi bi-book-fill"></i>';
+            document.getElementById('btn-manga-direction').innerHTML = mangaDirection === 'ltr' ? '<i class="bi bi-arrow-bar-right"></i>' : '<i class="bi bi-arrow-bar-left"></i>';
+            document.getElementById('manga-title').innerText = series.episodes.find(ep => ep.id === episodeId).title;
+
+            if (mangaView === 'single') {
+                document.getElementById('manga-image-2').classList.add('d-none');
+                document.getElementById('btn-manga-start').classList.add('visually-hidden');
+            } else {
+                document.getElementById('manga-image-2').classList.remove('d-none');
+                document.getElementById('btn-manga-start').classList.remove('visually-hidden');
+            }
+
+            if (mangaDirection === 'rtl') {
+                document.getElementById('manga-view').classList.add('flex-row-reverse');
+                document.getElementById('manga-image-1').style.objectPosition = 'left';
+                document.getElementById('manga-image-2').style.objectPosition = 'right';
+            } else {
+                document.getElementById('manga-view').classList.remove('flex-row-reverse');
+                document.getElementById('manga-image-1').style.objectPosition = 'right';
+                document.getElementById('manga-image-2').style.objectPosition = 'left';
+            }
+
+            document.getElementById('manga-progress').setAttribute('aria-valuemax', mangaImages.length - 1);
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft') {
+                    mangaLeft();
+                } else if (event.key === 'ArrowRight') {
+                    mangaRight();
+                }
+            });
+
+            var filteredEpisodes = series.episodes.filter(ep => ep.id > 0);
+            const episodeIndex = filteredEpisodes.findIndex(ep => ep.id === episodeId);
+
+            if (episodeIndex > 0) {
+                const prevEpisode = filteredEpisodes[episodeIndex - 1];
+                document.getElementById('btn-prev-episode').addEventListener('click', () => {
+                    window.location.href = `read.html?series=${seriesId}&episode=${prevEpisode.id}&view=manga`;
+                });
+            } else {
+                document.getElementById('btn-prev-episode').classList.add('disabled');
+            }
+
+            if (episodeIndex < filteredEpisodes.length - 1) {
+                const nextEpisode = filteredEpisodes[episodeIndex + 1];
+                document.getElementById('btn-next-episode').addEventListener('click', () => {
+                    window.location.href = `read.html?series=${seriesId}&episode=${nextEpisode.id}&view=manga`;
+                });
+            } else {
+                document.getElementById('btn-next-episode').classList.add('disabled');
+            }
+
+            renderPage();
+        }
+
+        function closeMangaView() {
+            document.getElementById('manga-container').classList.add('visually-hidden');
+            document.getElementById('episode-content').classList.remove('visually-hidden');
+            document.getElementById('comment-container').classList.remove('visually-hidden');
+            window.scrollTo(0, document.getElementById(`image-${currPage}`).offsetTop - 70);
+        }
+
+        function toggleMangaToolbar() {
+            document.querySelectorAll('.manga-toolbar').forEach(toolbar => {
+                toolbar.classList.toggle('visually-hidden');
+            });
+        }
+
+        function toggleMangaView(btn) {
+            btn.innerHTML = btn.innerHTML.includes('book-half') ? '<i class="bi bi-book-fill"></i>' : '<i class="bi bi-book-half"></i>';
+            document.getElementById('manga-image-2').classList.toggle('d-none');
+            if (btn.innerHTML.includes('book-fill')) {
+                localStorage.setItem('mangaView', 'double');
+                document.getElementById('btn-manga-start').classList.remove('visually-hidden');
+            } else {
+                localStorage.setItem('mangaView', 'single');
+                document.getElementById('btn-manga-start').classList.add('visually-hidden');
+            }
+        }
+
+        function toggleMangaStart(btn) {
+            var currStart = btn.getAttribute('data-start');
+            if (currStart == "12") {
+                btn.setAttribute('data-start', '23');
+                document.getElementById('icon-manga-start').src = './icons/manga-23.svg';
+                currPage -= 1;
+                renderPage();
+            } else {
+                btn.setAttribute('data-start', '12');
+                document.getElementById('icon-manga-start').src = './icons/manga-12.svg';
+                currPage += 1;
+                renderPage();
+            }
+        }
+
+        function toggleMangaDirection(btn) {
+            btn.innerHTML = btn.innerHTML.includes('arrow-bar-left') ? '<i class="bi bi-arrow-bar-right"></i>' : '<i class="bi bi-arrow-bar-left"></i>';
+            document.getElementById('manga-view').classList.toggle('flex-row-reverse');
+
+            if (document.getElementById('manga-view').classList.contains('flex-row-reverse')) {
+                localStorage.setItem('mangaDirection', 'rtl');
+                document.getElementById('manga-image-1').style.objectPosition = 'left';
+                document.getElementById('manga-image-2').style.objectPosition = 'right';
+            } else {
+                localStorage.setItem('mangaDirection', 'ltr');
+                document.getElementById('manga-image-1').style.objectPosition = 'right';
+                document.getElementById('manga-image-2').style.objectPosition = 'left';
+            }
+        }
+
+        function mangaLeft() {
+            if (localStorage.getItem('mangaDirection') == 'ltr') {
+                prevPage(localStorage.getItem('mangaView') || 'double');
+            } else {
+                nextPage(localStorage.getItem('mangaView') || 'double');
+            }
+        }
+
+        function mangaRight() {
+            if (localStorage.getItem('mangaDirection') == 'ltr') {
+                nextPage(localStorage.getItem('mangaView') || 'double');
+            } else {
+                prevPage(localStorage.getItem('mangaView') || 'double');
+            }
+        }
+
+        function renderPage() {
+            const img1 = document.getElementById('manga-image-1');
+            const img2 = document.getElementById('manga-image-2');
+            img1.src = mangaImages[currPage] || '';
+            img2.src = mangaImages[currPage + 1] || '';
+            updateProgress();
+        }
+
+        function prevPage(view = "double") {
+            if (view == "double") {
+                if (currPage > 0) {
+                    currPage -= 2;
+                    renderPage();
+                }
+            } else {
+                if (currPage > 0) {
+                    currPage--;
+                    renderPage();
+                }
+            }
+        }
+
+        function nextPage(view = "double") {
+            if (view == "double") {
+                if (currPage < mangaImages.length - 2) {
+                    currPage += 2;
+                    renderPage();
+                }
+            } else {
+                if (currPage < mangaImages.length - 1) {
+                    currPage++;
+                    renderPage();
+                }
+            }
+        }
+
+        function updateProgress() {
+            const progress = document.getElementById('manga-progress');
+            const totalPages = mangaImages.length - 1;
+            const percent = Math.round(((currPage + 1) / totalPages) * 100);
+
+            progress.setAttribute('aria-valuenow', currPage);
+            progress.style.width = percent + "%";   // 👈 실제 막대 움직이는 부분
         }
 
     </script>

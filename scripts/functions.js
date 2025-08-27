@@ -106,7 +106,7 @@ async function loadSeries(series) {
         seriesElement.id = `series-${series.id}`;
         seriesElement.className = 'col-4 col-md-2';
         seriesElement.innerHTML = `
-            <div class="d-flex flex-column align-items-center" style="cursor: pointer;" onclick="location.href='./read?series=${series.id}'">
+            <div class="d-flex flex-column align-items-center mb-3" style="cursor: pointer;" onclick="location.href='./read?series=${series.id}'">
                 <div class="position-relative w-100">
                     <img id="series-cover-${series.id}" src="${series.cover}" class="rounded shadow w-100" style="aspect-ratio: 2 / 3; object-fit: cover;" />
                     <div class="position-absolute top-0 start-0 fs-4 p-2">${getBookmarkIcon(bookmarks, series.id)}</div>
@@ -195,10 +195,13 @@ function loadEpisode(series) {
                     <td colspan="4">
                         <div class="d-flex justify-content-center gap-2">
                             <button class='btn btn-sm btn-success d-block' type='button' onclick='newEpisode("${series.id}")'>
-                                <i class="bi bi-plus-circle-fill"></i> 새 애피소드 추가
+                                <i class="bi bi-plus-circle-fill"></i> 새 애피소드
+                            </button>
+                            <button class="btn btn-sm btn-primary d-block" type="button" onclick="newSeries('${series.id}')">
+                                <i class="bi bi-plus-circle-fill"></i> 시리즈로 추가
                             </button>
                             <button class='btn btn-sm btn-light d-block' type='button' onclick='newHorizontalLine("${series.id}")'>
-                                <i class="bi bi-plus-circle-fill"></i> 구분선 추가
+                                <i class="bi bi-plus-circle-fill"></i> 구분선
                             </button>
                         </div>
                     </td>
@@ -220,48 +223,89 @@ function loadEpisode(series) {
 }
 
 
-function newEpisode(seriesId) {
+function newEpisode(seriesId, episode = null) {
     if (seriesId == "new-series") {
         var episodeList = document.getElementById('episode-list');
         var newEpisodeItem = document.createElement('div');
         newEpisodeItem.className = 'list-group-item d-flex align-items-center border-0 px-0 pt-0';
-        newEpisodeItem.innerHTML = `
-        <i class="bi bi-list pe-2 d-block col-auto handle"></i>
-        <div class="col">
-            <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
-            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                <input type="url" class="form-control" placeholder="번역글 링크"
-                    pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*"
-                    title="URL은 https://gall.dcinside.com 또는 https://m.dcinside.com로 시작해야 합니다."
-                    onchange="getTitle(this)" required/>
+        if (episode) {
+            newEpisodeItem.innerHTML = `
+            <i class="bi bi-list pe-2 d-block col-auto handle"></i>
+            <div class="col">
+                <span class="status fst-italic text-secondary"><small>${episode.title}</small></span>
+                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="url" class="form-control" placeholder="번역글 링크"
+                        pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*"
+                        title="URL은 https://gall.dcinside.com 또는 https://m.dcinside.com로 시작해야 합니다."
+                        onchange="getTitle(this)" value="https://gall.dcinside.com/mgallery/board/view?id=lilyfever&no=${episode.id}"
+                        data-episode='${JSON.stringify(episode)}' required/>
+                </div>
             </div>
-        </div>
-        <i class="bi bi-trash ps-2 text-danger d-block col-auto" style="cursor: pointer;" onclick="removeRow(this)"></i>`;
+            <i class="bi bi-trash ps-2 text-danger d-block col-auto" style="cursor: pointer;" onclick="removeRow(this)"></i>`;
+
+        } else {
+            newEpisodeItem.innerHTML = `
+            <i class="bi bi-list pe-2 d-block col-auto handle"></i>
+            <div class="col">
+                <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
+                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="url" class="form-control" placeholder="번역글 링크"
+                        pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*"
+                        title="URL은 https://gall.dcinside.com 또는 https://m.dcinside.com로 시작해야 합니다."
+                        onchange="getTitle(this)" required/>
+                </div>
+            </div>
+            <i class="bi bi-trash ps-2 text-danger d-block col-auto" style="cursor: pointer;" onclick="removeRow(this)"></i>`;
+        }
         episodeList.appendChild(newEpisodeItem);
 
     } else {
         var table = document.getElementById(`table-${seriesId}`);
         var tbody = table.getElementsByTagName('tbody')[0];
         var tr = document.createElement('tr');
-        tr.innerHTML = `
-        <td class="text-center align-middle handle"><i class="bi bi-list"></i></td>
-        <td>
-            <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
-            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
-            <div class="input-group input-group-sm">
-                <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
-                <input type="url" class="form-control" placeholder="번역글 링크" 
-                    pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*" 
-                    title="URL은 https://gall.dcinside.com/ 또는 https://m.dcinside.com/로 시작해야 합니다."
-                    onchange="getTitle(this, '${seriesId}')" />
-            </div>
-        </td>
-        <td class="d-none d-md-table-cell"></td>
-        <td class="text-center align-middle delete-icon">
-            <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
-        </td>`;
+        if (episode) {
+            tr.innerHTML = `
+            <td class="text-center align-middle handle"><i class="bi bi-list"></i></td>
+            <td>
+                <span class="status fst-italic text-secondary"><small>${episode.title}</small></span>
+                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="url" class="form-control" placeholder="번역글 링크" 
+                        pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*" 
+                        title="URL은 https://gall.dcinside.com/ 또는 https://m.dcinside.com/로 시작해야 합니다."
+                        onchange="getTitle(this, '${seriesId}')" value="https://gall.dcinside.com/mgallery/board/view?id=lilyfever&no=${episode.id}" 
+                        data-episode='${JSON.stringify(episode)}' />
+                </div>
+            </td>
+            <td class="d-none d-md-table-cell"></td>
+            <td class="text-center align-middle delete-icon">
+                <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+            </td>`;
+        } else {
+            tr.innerHTML = `
+            <td class="text-center align-middle handle"><i class="bi bi-list"></i></td>
+            <td>
+                <span class="status fst-italic text-secondary"><small>에피소드 제목</small></span>
+                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"></span>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                    <input type="url" class="form-control" placeholder="번역글 링크" 
+                        pattern="https://(gall\.dcinside\.com/|m\.dcinside\.com/).*" 
+                        title="URL은 https://gall.dcinside.com/ 또는 https://m.dcinside.com/로 시작해야 합니다."
+                        onchange="getTitle(this, '${seriesId}')" />
+                </div>
+            </td>
+            <td class="d-none d-md-table-cell"></td>
+            <td class="text-center align-middle delete-icon">
+                <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
+            </td>`;
+        }
+
         tbody.appendChild(tr);
     }
 }
@@ -594,6 +638,61 @@ function newHorizontalLine(seriesId) {
             <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
         </td>`;
         tbody.appendChild(tr);
+    }
+}
+
+async function newSeries(seriesId) {
+    try {
+        var url = prompt("시리즈 모음이 포함된 URL을 입력하세요:");
+        if (url) {
+            new URL(url);
+            var match = url.match(/https:\/\/(gall\.dcinside\.com\/|m\.dcinside\.com\/)/);
+            if (match) {
+
+                const loading = `<div id="loading-series" class="text-center py-2 text-secondary">
+                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> 시리즈 불러오는 중...
+                                </div>`;
+                if (seriesId == 'new-series') {
+                    var episodeList = document.getElementById('episode-list');
+                    episodeList.innerHTML += loading;
+
+                    if (window.seriesId) {
+                        document.getElementById(`btn-save-series-${window.seriesId}`).disabled = true;
+                    }
+                    if (document.getElementById('save-new-series')) {
+                        document.getElementById('save-new-series').disabled = true;
+                    }
+                } else {
+                    var table = document.getElementById(`table-${seriesId}`);
+                    table.querySelector('tbody').innerHTML += `<tr id="loading-series"><td colspan="4">${loading}</td></tr>`;
+
+                    document.getElementById(`btn-save-series-${seriesId}`).disabled = true;
+                }
+
+                const id = extractIDFromURL(url);
+                const episodes = await getEpisodesFromSeries(id);
+                episodes.forEach(ep => {
+                    newEpisode(seriesId, ep);
+                })
+
+                if (seriesId == 'new-series') {
+                    if (window.seriesId) {
+                        document.getElementById(`btn-save-series-${window.seriesId}`).disabled = false;
+                    }
+                    if (document.getElementById('save-new-series')) {
+                        document.getElementById('save-new-series').disabled = false;
+                    }
+                } else {
+                    document.getElementById(`btn-save-series-${seriesId}`).disabled = false;
+                }
+
+                document.getElementById('loading-series').remove();
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        alert("유효하지 않은 URL입니다.");
+        return;
     }
 }
 
