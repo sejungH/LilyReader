@@ -606,7 +606,8 @@
         }
 
         function mangaLeft() {
-            if (localStorage.getItem('mangaDirection') == 'ltr') {
+            const mangaDirection = localStorage.getItem('mangaDirection') || 'ltr';
+            if (mangaDirection == 'ltr') {
                 prevPage(localStorage.getItem('mangaView') || 'double');
             } else {
                 nextPage(localStorage.getItem('mangaView') || 'double');
@@ -614,7 +615,8 @@
         }
 
         function mangaRight() {
-            if (localStorage.getItem('mangaDirection') == 'ltr') {
+            const mangaDirection = localStorage.getItem('mangaDirection') || 'ltr';
+            if (mangaDirection == 'ltr') {
                 nextPage(localStorage.getItem('mangaView') || 'double');
             } else {
                 prevPage(localStorage.getItem('mangaView') || 'double');
