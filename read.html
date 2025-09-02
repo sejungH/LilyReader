@@ -63,9 +63,15 @@
         }
 
         @media (max-width: 768px) {
+            #episode-content div:has(img) {
+                width: 100%;
+                margin: auto -1rem;
+            }
+
             #episode-content img {
                 width: calc(100% + 2rem);
                 margin: auto -1rem;
+                cursor: pointer;
             }
 
             #manga-title {
@@ -85,6 +91,7 @@
                 max-width: 100%;
                 margin: auto auto;
                 display: block;
+                cursor: pointer;
             }
 
             #manga-title {
@@ -124,6 +131,7 @@
             min-width: 50%;
             height: 100%;
             object-fit: contain;
+            cursor: pointer;
         }
 
         #manga-view img[src=""] {
@@ -216,7 +224,7 @@
                 </div>
                 <div id="episode-content" class="overflow-x-hidden"></div>
                 <div id="manga-container"
-                    class="position-absolute start-0 end-0 top-0 bottom-0 overflow-hidden bg-secondary-subtle p-0 z-2 visually-hidden">
+                    class="position-absolute overflow-hidden bg-secondary-subtle p-0 z-2 visually-hidden">
                     <div id="manga-view" class="d-flex justify-content-center align-items-center h-100">
                         <img id="manga-image-1" /><img id="manga-image-2" />
                     </div>
@@ -285,6 +293,16 @@
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed top-50 start-50 translate-middle  p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="1000">
+            <div class="toast-header">
+                <i class="bi bi-book-fill me-2"></i>
+                <strong class="me-auto">LILY READER</strong>
+            </div>
+            <div class="toast-body"></div>
         </div>
     </div>
 
@@ -435,7 +453,7 @@
             document.getElementById('input-paragraph-margin').innerText = paragraphMargin;
 
             document.getElementById('episode-content').querySelectorAll('*').forEach(el => {
-                if (el.textContent.trim()) {
+                if (!el.closest('.og-div') && el.textContent.trim()) {
                     el.style.fontSize = fontSize + 'rem';
                     el.style.lineHeight = lineHeight + 'rem';
                     el.style.marginTop = paragraphMargin + 'rem';
@@ -451,7 +469,7 @@
             input.innerText = value;
             var content = document.getElementById('episode-content');
             content.querySelectorAll('*').forEach(el => {
-                if (el.textContent.trim()) {
+                if (!el.closest('.og-div') && el.textContent.trim()) {
                     el.style.fontSize = value + 'rem';
                 }
             });
@@ -465,7 +483,7 @@
             input.innerText = value;
             var content = document.getElementById('episode-content');
             content.querySelectorAll('*').forEach(el => {
-                if (el.textContent.trim()) {
+                if (!el.closest('.og-div') && el.textContent.trim()) {
                     el.style.lineHeight = value + 'rem';
                 }
             });
@@ -479,7 +497,7 @@
             input.innerText = value;
             var content = document.getElementById('episode-content');
             content.querySelectorAll('*').forEach(el => {
-                if (el.textContent.trim()) {
+                if (!el.closest('.og-div') && el.textContent.trim()) {
                     el.style.marginTop = value + 'rem';
                     el.style.marginBottom = value + 'rem';
                 }
@@ -488,9 +506,17 @@
         }
 
         function openMangaView() {
-            document.getElementById('manga-container').classList.remove('visually-hidden');
-            document.getElementById('episode-content').classList.add('visually-hidden');
-            document.getElementById('comment-container').classList.add('visually-hidden');
+            document.querySelector('body').classList.add('overflow-hidden');
+            const mangaContainer = document.getElementById('manga-container');
+            mangaContainer.classList.remove('visually-hidden');
+            mangaContainer.addEventListener("touchmove", function (e) {
+                e.preventDefault();
+            }, { passive: false });
+            adjustMangaView();
+            window.addEventListener("resize", adjustMangaView);
+
+            document.getElementById('episode-content').classList.add('opacity-0');
+            document.getElementById('comment-container').classList.add('opacity-0');
 
             const mangaView = localStorage.getItem('mangaView') || 'double';
             const mangaDirection = localStorage.getItem('mangaDirection') || 'ltr';
@@ -523,8 +549,16 @@
                     mangaLeft();
                 } else if (event.key === 'ArrowRight') {
                     mangaRight();
+                } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                    event.preventDefault();
+                } else if (event.key === 'Escape') {
+                    closeMangaView();
                 }
             });
+
+            mangaContainer.addEventListener('wheel', (event) => {
+                event.preventDefault();
+            }, { passive: false });
 
             var filteredEpisodes = series.episodes.filter(ep => ep.id > 0);
             const episodeIndex = filteredEpisodes.findIndex(ep => ep.id === episodeId);
@@ -551,10 +585,26 @@
         }
 
         function closeMangaView() {
+            document.querySelector('body').classList.remove('overflow-hidden');
             document.getElementById('manga-container').classList.add('visually-hidden');
-            document.getElementById('episode-content').classList.remove('visually-hidden');
-            document.getElementById('comment-container').classList.remove('visually-hidden');
-            window.scrollTo(0, document.getElementById(`image-${currPage}`).offsetTop - 70);
+            document.getElementById('episode-content').classList.remove('opacity-0');
+            document.getElementById('comment-container').classList.remove('opacity-0');
+            window.scrollTo({ top: document.getElementById(`image-${currPage}`).offsetTop - 70, behavior: "instant" });
+        }
+
+        function adjustMangaView() {
+            const mangaContainer = document.getElementById('manga-container');
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (isMobile) {
+                mangaContainer.style.top = window.scrollY + "px";
+            } else {
+                mangaContainer.style.top = 0;
+                window.scrollTo({ top: 0, behavior: "instant" });
+            }
+            mangaContainer.style.left = 0;
+            mangaContainer.style.height = window.innerHeight + "px";
+            mangaContainer.style.width = window.innerWidth + "px";
         }
 
         function toggleMangaToolbar() {
@@ -636,11 +686,23 @@
                 if (currPage > 0) {
                     currPage -= 2;
                     renderPage();
+                } else {
+                    const toast_div = document.getElementById('liveToast');
+                    const toastBody = document.querySelector('.toast-body');
+                    toastBody.textContent = "첫번째 페이지입니다";
+                    const toast = new bootstrap.Toast(toast_div);
+                    toast.show();
                 }
             } else {
                 if (currPage > 0) {
                     currPage--;
                     renderPage();
+                } else {
+                    const toast_div = document.getElementById('liveToast');
+                    const toastBody = document.querySelector('.toast-body');
+                    toastBody.textContent = "첫번째 페이지입니다";
+                    const toast = new bootstrap.Toast(toast_div);
+                    toast.show();
                 }
             }
         }
@@ -650,19 +712,37 @@
                 if (currPage < mangaImages.length - 2) {
                     currPage += 2;
                     renderPage();
+                } else {
+                    const toast_div = document.getElementById('liveToast');
+                    const toastBody = document.querySelector('.toast-body');
+                    toastBody.textContent = "마지막 페이지입니다";
+                    const toast = new bootstrap.Toast(toast_div);
+                    toast.show();
                 }
             } else {
                 if (currPage < mangaImages.length - 1) {
                     currPage++;
                     renderPage();
+                } else {
+                    const toast_div = document.getElementById('liveToast');
+                    const toastBody = document.querySelector('.toast-body');
+                    toastBody.textContent = "마지막 페이지입니다";
+                    const toast = new bootstrap.Toast(toast_div);
+                    toast.show();
                 }
             }
         }
 
         function updateProgress() {
+            const viewMode = localStorage.getItem('mangaView') || 'double';
             const progress = document.getElementById('manga-progress');
             const totalPages = mangaImages.length - 1;
-            const percent = Math.round(((currPage + 1) / totalPages) * 100);
+            let percent;
+            if (viewMode === 'single') {
+                percent = Math.round((currPage / totalPages) * 100);
+            } else {
+                percent = Math.round(((currPage + 1) / totalPages) * 100);
+            }
 
             progress.setAttribute('aria-valuenow', currPage);
             progress.style.width = percent + "%";   // 👈 실제 막대 움직이는 부분

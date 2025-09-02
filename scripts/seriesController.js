@@ -160,24 +160,30 @@ function cleanUpContent(doc) {
     }
 
     for (const p of paragraphs) {
-        p.querySelectorAll('span[style]').forEach(span => {
-            span.removeAttribute('style');
-        });
+        if (!p.querySelector('div') && !p.querySelector('a')) {
+            if (p.querySelector('span') || p.querySelector('font')) {
+                p.innerHTML = extractTextBrImg(p);
+            }
+        }
     }
 
     const images = doc.querySelectorAll('img');
     for (const img of images) {
-        img.removeAttribute('style');
-        img.removeAttribute('class');
-        img.removeAttribute('data-*');
-        img.removeAttribute('onclick');
-        img.removeAttribute('onerror');
-        img.removeAttribute('loading');
+        if (img.classList.contains('written_dccon')) {
+            img.remove();
+        } else {
+            img.removeAttribute('style');
+            img.removeAttribute('class');
+            img.removeAttribute('data-*');
+            img.removeAttribute('onclick');
+            img.removeAttribute('onerror');
+            img.removeAttribute('loading');
 
-        if (img.hasAttribute('data-original')) {
-            img.setAttribute('src', img.getAttribute('data-original'));
-            img.setAttribute('loading', 'lazy');
-            img.removeAttribute('data-original');
+            if (img.hasAttribute('data-original')) {
+                img.setAttribute('src', img.getAttribute('data-original'));
+                img.setAttribute('loading', 'lazy');
+                img.removeAttribute('data-original');
+            }
         }
     }
 
@@ -187,6 +193,25 @@ function cleanUpContent(doc) {
     doc.innerHTML = html;
 
     return doc;
+}
+
+function extractTextBrImg(node) {
+    let result = '';
+    node.childNodes.forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE) {
+            result += child.textContent;
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+            if (child.tagName === 'BR') {
+                result += '<br>';
+            } else if (child.tagName === 'IMG') {
+                result += child.outerHTML;
+            } else {
+                // span, font 등 불필요한 태그는 내부만 재귀적으로 추출
+                result += extractTextBrImg(child);
+            }
+        }
+    });
+    return result;
 }
 
 function getURL(id) {
