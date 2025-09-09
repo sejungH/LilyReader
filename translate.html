@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@200..900&display=swap" rel="stylesheet">
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GP8PTD3TLS"></script>
+    <script async src="https://accounts.google.com/gsi/client" defer></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-GP8PTD3TLS');
+    </script>
+
+    <link rel="icon" type="image/x-icon" href="./icons/favicon.ico">
+    <meta property="og:image" content="https://www.lilyreader.online/icons/icon.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="1024">
+    <meta property="og:title" content="LILY READER">
+    <meta property="og:description" content="EPUB AI 자동 번역기 by.LILYD3V">
+
+    <title>AI 자동 번역 | LilyReader</title>
+    <style>
+        @font-face {
+            font-family: 'RIDIBatang';
+            src: url('./fonts/RIDIBatang.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        body {
+            font-family: "Chiron GoRound TC", sans-serif;
+            height: 100vh;
+        }
+
+        #drop-zone {
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        #drop-zone i.bi {
+            font-size: 5rem;
+        }
+
+        #toolbar {
+            transition: opacity 0.3s;
+        }
+
+        #toolbar-top,
+        #toolbar-bottom {
+            touch-action: none;
+        }
+
+        #toc {
+            width: 300px;
+            padding-top: 80px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            --bs-list-group-bg: transparent;
+            --bs-list-group-border-color: transparent;
+        }
+
+        #viewer {
+            font-family: 'RIDIBatang', sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            padding: 5rem 1rem;
+            touch-action: manipulation;
+        }
+
+        #viewer p,
+        #viewer span {
+            text-indent: 1rem;
+            text-wrap: wrap;
+            overflow-wrap: anywhere;
+        }
+
+        #viewer img,
+        #viewer svg,
+        #viewer image {
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+        }
+
+        input,
+        textarea,
+        button {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="drop-zone-container">
+        <div id="drop-zone"
+            class="d-flex flex-column position-absolute top-0 start-0 bottom-0 end-0 align-items-center justify-content-center text-center text-secondary bg-body z-3">
+            <i class="bi bi-file-earmark-arrow-up"></i>
+            <span id="drop-zone-text">여기에 EPUB 파일을 드래그 앤 드롭하세요<br>또는 클릭하여 파일 선택</span>
+        </div>
+        <input type="file" id="file-input" accept=".epub" style="display:none;" />
+    </div>
+
+    <div id="viewer-container" class="position-absolute top-0 start-0 bottom-0 end-0">
+        <div class="position-absolute top-0 start-0 bottom-0 end-0 bg-body">
+            <div id="viewer" class="w-100 h-100 overflow-x-hidden overflow-y-auto" onclick="toggleToolbar()"></div>
+            <div id="toolbar">
+                <div id="toc"
+                    class="position-absolute top-0 start-0 ms-3 rounded-bottom bg-secondary-subtle shadow-sm list-group collapse">
+                </div>
+                <div id="toolbar-top"
+                    class="d-flex bg-body position-fixed top-0 w-100 shadow align-items-center gap-3 px-3 py-2">
+                    <i class="bi bi-list-ul opacity-50 fs-3" style="cursor: pointer;" onclick="toggleToc()"></i>
+                    <div class="d-flex flex-column w-50 me-auto">
+                        <span id="book-title" class="fs-5 text-truncate"></span>
+                        <span id="book-author" class="text-secondary fw-light"></span>
+                    </div>
+                    <button type="button" class="btn btn-lg btn-outline-primary" onclick="translatePage()"><i
+                            class="bi bi-translate"></i></button>
+                    <button type="button" class="btn btn-lg opacity-50" data-bs-toggle="modal"
+                        data-bs-target="#settingModal"><i class="bi bi-gear-fill"></i></button>
+                </div>
+                <div id="toolbar-bottom"
+                    class="d-flex bg-body position-fixed bottom-0 w-100 shadow align-items-center gap-3 p-3">
+                    <button id="prev-page" class="btn btn-outline-secondary rounded-pill me-auto"
+                        onclick="prevPage()"><i class="bi bi-arrow-left-short"></i> 이전페이지</button>
+                    <button id="next-page" class="btn btn-outline-secondary rounded-pill" onclick="nextPage()">다음페이지 <i
+                            class="bi bi-arrow-right-short"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="settingModal" tabindex="-1" aria-labelledby="settingModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="settingModalLabel">설정</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <h1 class="h5">번역 설정</h1>
+                        <div class="mb-3">
+                            <label for="api-key" class="col-form-label">API Key:</label>
+                            <input type="text" class="form-control" id="api-key">
+                        </div>
+                        <div class="mb-3">
+                            <label for="translate-note" class="col-form-label">번역노트:</label>
+                            <textarea class="form-control" id="translate-note" rows="6">1. 모든 문장은 "~다."의 형태로 번역해야 한다.
+2. さん의 호칭은 무조건 이름 뒤에 " 씨"를 붙여서 번역해야 한다.
+3. 캐릭터의 대사는 ~다 로 끝나지 않고 ~어 와 같은 구어체로 번역 
+4. 어머니 -> 엄마, 아버지 -> 아빠
+5. 등장인물의 이름은 아래를 참고하여 번역합니다:
+</textarea>
+                        </div>
+                        <hr class="my-4" />
+                        <h1 class="h5">보기 설정</h1>
+                        <div class="mb-3 d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-3">
+                                <span>글자 크기</span>
+                                <span class="text-secondary" id="font-size">1</span>
+                                <div class="btn-group ms-auto" role="group">
+                                    <button id="font-size-decrease" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-dash-lg"></i></button>
+                                    <button id="font-size-increase" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></button>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span>줄 간격</span>
+                                <span class="text-secondary" id="line-height">1</span>
+                                <div class="btn-group ms-auto" role="group">
+                                    <button id="line-height-decrease" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-dash-lg"></i></button>
+                                    <button id="line-height-increase" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></button>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span>문단 간격</span>
+                                <span class="text-secondary" id="paragraph-spacing">1</span>
+                                <div class="btn-group ms-auto" role="group">
+                                    <button id="paragraph-spacing-decrease" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-dash-lg"></i></button>
+                                    <button id="paragraph-spacing-increase" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></button>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span>문단 너비</span>
+                                <span class="text-secondary" id="paragraph-width">5</span>
+                                <div class="btn-group ms-auto" role="group">
+                                    <button id="paragraph-width-decrease" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-dash-lg"></i></button>
+                                    <button id="paragraph-width-increase" type="button"
+                                        class="btn btn-sm btn-outline-primary"><i class="bi bi-plus-lg"></i></button>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <span>배경 색</span>
+                                <span class="text-secondary" id="background-color">라이트</span>
+                                <div class="btn-group ms-auto" role="group" aria-label="radio toggle button group">
+                                    <input id="background-color-light" type="radio" class="btn-check" name="btn-radio"
+                                        autocomplete="off" checked>
+                                    <label class="btn btn-sm btn-outline-primary" for="background-color-light"><i
+                                            class="bi bi-brightness-high-fill"></i></label>
+                                    <input id="background-color-dark" type="radio" class="btn-check" name="btn-radio"
+                                        autocomplete="off">
+                                    <label class="btn btn-sm btn-outline-primary" for="background-color-dark"><i
+                                            class="bi bi-moon-fill"></i></label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSetting()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<script>
+    TRANSLATE_NOTE = `이하의 지침들을 따르며 원문을 한국어로 최대한 자연스럽게 완전히 번역합니다.
+
+응답 형식은 다음 지침을 따릅니다:
+1. 입력으로 "원문"이 주어집니다. 
+2. 결과에 번역되지 않은 부분이 없도록 내용을 빠짐없이 모두 번역해야 합니다. 단 HTML 문서의 경우, 태그 내부의 텍스트가 아닌 HTML 태그 이름과 속성 이름 및 값은 그대로 유지해야 합니다. 예시: <i id="TEXT">text</i>→<i id="TEXT">텍스트</i> / <img id="hello" src="hello.jpg">→<img id="hello" src="hello.jpg"> / <button class="go">Click!</button>→<button class="go">클릭!</button>
+3. 다른 응답이나 내부 사고 과정 없이, 오직 번역 결과만을 즉시 출력해야 합니다. 출력은 코드 블록으로 감싸는 대신, 시스템에 번역이 끝났음을 알리기 위해 반드시 </main>으로 끝내도록 합니다.
+
+번역 시 공통적으로 다음 지침을 따릅니다:
+1. 각 캐릭터의 말투 및 어투는 해당 캐릭터의 개성이 잘 드러나도록 자연스럽게 번역합니다. 감성을 더 잘 살릴 수 있다면 의미를 해치지 않는 선에서 표현을 적절히 의역하는 것도 좋습니다.
+2. 원문이 언어의 한계로 인해 존댓말과 반말이 구분되지 않거나 성별이 명확하지 않은 호칭을 사용하는 경우에도, 해당 인물의 말투와 분위기, 나이와 성별, 인물 간의 관계와 사회적 위치, 시대적 배경과 세계관을 면밀히 분석하여 상황에 가장 적합한 말투와 호칭으로 섬세하게 번역합니다.
+3. 특히, 성별에 따라 호칭이 형/누나, 형님/누님, 오라버니/오빠/언니와 같이 달라질 수 있는 경우 모든 단서를 활용해 등장인물들의 성별을 추론해내야 하며, 마찬가지로 남자 형제를 부르는 경우 형/오빠/남동생, 여자 형제를 부르는 경우 누나/언니/여동생을 정확히 구분하지 못했을 때 독자에게 매우 심각한 오해를 일으킬 수 있으므로 최대한 상황에 맞는 호칭을 찾아 사용해야 합니다.
+4. 일반적인 한국어 글처럼 문장 부호를 씁니다. 대사를 큰따옴표("")로, 독백을 작은따옴표('')로 표현합니다. 단, 특정 기호를 특수한 연출로 쓴 경우 의도를 전달하기 위해 원본을 유지합니다.
+
+원문이 일본어라면 다음 지침을 따릅니다:
+1. 일본어 발음은 국립국어원 외래어 표기법을 무시하고 대중을 위해 통용 표기를 최우선합니다. 가급적 해당 장르 및 작품과 서브컬처에서 통용되는 한국어 표기를 따르되, 통용 표기가 알려지지 않은 경우 가나를 현 국립국어원 표기법처럼 그대로 옮기기보단 실제 발음에 가깝게 표기하는 편이 선호됩니다. 예시: へうげもの→효게모노 / ツンデレ→츤데레 / 大塚愛→오오츠카 아이 / 吉祥院麗華→킷쇼인 레이카 / 臙条巴→엔조 토모에 / 柊つかさ→히이라기 츠카사 / 魂魄妖夢→콘파쿠 요우무 / 因幡てゐ→이나바 테위 / 比那名居天子→히나나위 텐시
+2. 한국어로 자연스럽게 번역하기 위해 내용을 왜곡하지 않는 선에서 맥락에 맞게 약간의 보충이나 수정을 활용한 의역이 권장됩니다. 예시: 憑依するなら誰でもいいから麗華以外でお願いしたかった。切実に思うよ。→빙의할 거라면 누구든 좋으니 레이카 말고 다른 사람으로 부탁하고 싶었다. 간절히 생각한다. / 小学生に一体いくらのお小遣い渡しているんだ。それはもはや、お小遣いではなく経費だ。→초등학생한테 용돈을 대체 얼마나 주는 건데. 그건 더 이상 용돈이 아니라 경비라고.
+3. 단, 제목이나 중요한 문장 및 연출의 경우 가급적 구조를 훼손하지 않고 번역합니다. 예시: 謙虚、堅実をモットーに生きております！→겸허, 견실을 모토로 살아가고 있습니다!
+
+원문이 중국어라면 다음 지침을 따릅니다:
+1. 중화권의 인명은 기본적으로 한국 한자음으로 씁니다. 예시: 毛泽东→모택동 / 成龍→성룡 / 周明瑞→주명서 / 小龍女→소용녀
+2. 단어가 한국에서 이미 원음에 가까운 표기로 매우 잘 알려진 경우 알려진 표기를 따릅니다. 예시: 习近平→시진핑 / 李克强→리커창 / 北京→베이징 / 上海→상하이
+3. 단, 배경이 20세기 이전의 과거이거나, 무협/선협/대체역사 장르의 글이라면, 중국어 고유명사는 모두 한국 한자음으로 씁니다. 예시: 北京→북경 / 上海→상해 / 北冥神功→북명신공 / 南宮世家→남궁세가 / 回光返照→회광반조 / 如來神掌→여래신장
+4. 한자 관용구나 중국어 속담은 일대일대응되는 한국 속담이 있을 경우 해당 속담을 쓰되, 없다면 뜻을 풀어 씁니다. 예시: 人倒霉了喝凉水都塞牙→재수 없는 놈은 뒤로 넘어져도 코가 깨진다 / 「割雞焉用牛刀？」→"닭 잡는 데 어찌 소 잡는 칼을 쓰느냐?"
+
+`
+
+    var page = 0;
+    var pageList = [];
+    var zip;
+    var images = [];
+    var setting = {};
+
+    init();
+
+
+    function init() {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            dropZone.classList.add('bg-primary-subtle');
+        });
+        dropZone.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            dropZone.classList.remove('bg-primary-subtle');
+        });
+        dropZone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            dropZone.classList.remove('bg-primary-subtle');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+
+        getSetting();
+        updateSetting();
+    }
+
+    function getSetting() {
+        if (localStorage.getItem('translateSetting')) {
+            setting = JSON.parse(localStorage.getItem('translateSetting'));
+            document.getElementById('api-key').value = setting.apiKey;
+            document.getElementById('translate-note').value = setting.translateNote;
+            document.getElementById('font-size').innerText = setting.fontSize;
+            document.getElementById('line-height').innerText = setting.lineHeight;
+            document.getElementById('paragraph-spacing').innerText = setting.paragraphSpacing;
+            document.getElementById('paragraph-width').innerText = setting.paragraphWidth;
+            if (setting.backgroundColor == '라이트') {
+                document.getElementById('background-color-light').checked = true;
+                document.getElementById('background-color-dark').checked = false;
+            } else {
+                document.getElementById('background-color-light').checked = false;
+                document.getElementById('background-color-dark').checked = true;
+            }
+            document.getElementById('background-color').innerText = setting.backgroundColor;
+        } else {
+            setting.apiKey = document.getElementById('api-key').value;
+            setting.translateNote = document.getElementById('translate-note').value;
+            setting.fontSize = parseInt(document.getElementById('font-size').innerText);
+            setting.lineHeight = parseInt(document.getElementById('line-height').innerText);
+            setting.paragraphSpacing = parseInt(document.getElementById('paragraph-spacing').innerText);
+            setting.paragraphWidth = parseInt(document.getElementById('paragraph-width').innerText);
+            if (document.getElementById('background-color-light').checked) {
+                setting.backgroundColor = '라이트';
+            } else {
+                setting.backgroundColor = '다크';
+            }
+        }
+
+        updateSettingBtn();
+
+        document.getElementById('font-size-decrease').addEventListener('click', function () {
+            let fontSize = parseInt(document.getElementById('font-size').innerText);
+            document.getElementById('font-size').innerText = fontSize - 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('font-size-increase').addEventListener('click', function () {
+            let fontSize = parseInt(document.getElementById('font-size').innerText);
+            document.getElementById('font-size').innerText = fontSize + 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('line-height-decrease').addEventListener('click', function () {
+            let lineHeight = parseInt(document.getElementById('line-height').innerText);
+            document.getElementById('line-height').innerText = lineHeight - 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('line-height-increase').addEventListener('click', function () {
+            let lineHeight = parseInt(document.getElementById('line-height').innerText);
+            document.getElementById('line-height').innerText = lineHeight + 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('paragraph-spacing-decrease').addEventListener('click', function () {
+            let paragraphSpacing = parseInt(document.getElementById('paragraph-spacing').innerText);
+            document.getElementById('paragraph-spacing').innerText = paragraphSpacing - 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('paragraph-spacing-increase').addEventListener('click', function () {
+            let paragraphSpacing = parseInt(document.getElementById('paragraph-spacing').innerText);
+            document.getElementById('paragraph-spacing').innerText = paragraphSpacing + 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('paragraph-width-decrease').addEventListener('click', function () {
+            let paragraphWidth = parseInt(document.getElementById('paragraph-width').innerText);
+            document.getElementById('paragraph-width').innerText = paragraphWidth - 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('paragraph-width-increase').addEventListener('click', function () {
+            let paragraphWidth = parseInt(document.getElementById('paragraph-width').innerText);
+            document.getElementById('paragraph-width').innerText = paragraphWidth + 1;
+            updateSettingBtn();
+        });
+
+        document.getElementById('background-color-light').addEventListener('change', function () {
+            if (this.checked) {
+                document.getElementById('background-color').innerText = '라이트';
+                updateSettingBtn();
+            }
+        });
+
+        document.getElementById('background-color-dark').addEventListener('change', function () {
+            if (this.checked) {
+                document.getElementById('background-color').innerText = '다크';
+                updateSettingBtn();
+            }
+        });
+
+    }
+
+    function updateSettingBtn() {
+        let fontSize = parseInt(document.getElementById('font-size').innerText);
+        if (fontSize == 1) {
+            document.getElementById('font-size-decrease').disabled = true;
+        } else if (fontSize == 4) {
+            document.getElementById('font-size-increase').disabled = true;
+        } else {
+            document.getElementById('font-size-decrease').disabled = false;
+            document.getElementById('font-size-increase').disabled = false;
+        }
+
+        let lineHeight = parseInt(document.getElementById('line-height').innerText);
+        if (lineHeight == 1) {
+            document.getElementById('line-height-decrease').disabled = true;
+        } else if (lineHeight == 4) {
+            document.getElementById('line-height-increase').disabled = true;
+        } else {
+            document.getElementById('line-height-decrease').disabled = false;
+            document.getElementById('line-height-increase').disabled = false;
+        }
+
+        let paragraphSpacing = parseInt(document.getElementById('paragraph-spacing').innerText);
+        if (paragraphSpacing == 0) {
+            document.getElementById('paragraph-spacing-decrease').disabled = true;
+        } else if (paragraphSpacing == 4) {
+            document.getElementById('paragraph-spacing-increase').disabled = true;
+        } else {
+            document.getElementById('paragraph-spacing-decrease').disabled = false;
+            document.getElementById('paragraph-spacing-increase').disabled = false;
+        }
+
+        let paragraphWidth = parseInt(document.getElementById('paragraph-width').innerText);
+        if (paragraphWidth == 1) {
+            document.getElementById('paragraph-width-decrease').disabled = true;
+        } else if (paragraphWidth == 5) {
+            document.getElementById('paragraph-width-increase').disabled = true;
+        } else {
+            document.getElementById('paragraph-width-decrease').disabled = false;
+            document.getElementById('paragraph-width-increase').disabled = false;
+        }
+
+        let backgroundColor = document.getElementById('background-color').innerText;
+        if (backgroundColor == '라이트') {
+            document.getElementById('background-color-light').checked = true;
+            document.getElementById('background-color-dark').checked = false;
+        } else {
+            document.getElementById('background-color-light').checked = false;
+            document.getElementById('background-color-dark').checked = true;
+        }
+    }
+
+    function saveSetting() {
+        setting.apiKey = document.getElementById('api-key').value;
+        setting.translateNote = document.getElementById('translate-note').value;
+        setting.fontSize = parseInt(document.getElementById('font-size').innerText);
+        setting.lineHeight = parseInt(document.getElementById('line-height').innerText);
+        setting.paragraphSpacing = parseInt(document.getElementById('paragraph-spacing').innerText);
+        setting.paragraphWidth = parseInt(document.getElementById('paragraph-width').innerText);
+        setting.backgroundColor = document.getElementById('background-color-light').checked ? '라이트' : '다크';
+
+        localStorage.setItem('translateSetting', JSON.stringify(setting));
+
+        updateSetting();
+
+        var modalElem = document.getElementById('settingModal');
+        var modalInstance = bootstrap.Modal.getInstance(modalElem);
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+    }
+
+    function updateSetting() {
+        const viewer = document.getElementById('viewer');
+        document.querySelectorAll('#viewer p, #viewer div, #viewer span').forEach(el => {
+            el.style.fontSize = getFontSize() + 'rem';
+            el.style.lineHeight = getLineHeight() + 'rem';
+            el.style.marginBottom = getParagraphSpacing() + 'rem';
+        });
+        viewer.style.paddingLeft = ((6 - setting.paragraphWidth) * 5) + '%';
+        viewer.style.paddingRight = ((6 - setting.paragraphWidth) * 5) + '%';
+
+        if (setting.backgroundColor == '라이트') {
+            document.body.setAttribute('data-bs-theme', 'light');
+        } else {
+            document.body.setAttribute('data-bs-theme', 'dark');
+        }
+    }
+
+    async function handleFile(file) {
+        if (!file) return;
+        document.getElementById('drop-zone-text').textContent = '파일을 불러오는 중...';
+        const reader = new FileReader();
+        reader.onload = async function (evt) {
+            zip = await JSZip.loadAsync(evt.target.result);
+
+            await getMetaData();
+
+            // 이미지 파일 목록 추출 (jpg, png, gif 등)
+            const imageFiles = Object.keys(zip.files).filter(filename =>
+                /\.(jpg|jpeg|png|gif|svg)$/i.test(filename)
+            );
+
+            // 각 이미지를 Base64로 변환해서 추가
+            for (const filename of imageFiles) {
+                const blob = await zip.file(filename).async("blob");
+                const url = URL.createObjectURL(blob);
+                images.push({ filename: filename.split('/').pop(), url: url });
+            }
+
+            // EPUB 페이지 읽기
+            await readPage(pageList[0].filename);
+
+            // 드롭존 숨기기
+            document.getElementById('drop-zone-container').classList.add('d-none');
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    async function getMetaData() {
+        const containerText = await zip.file("META-INF/container.xml").async("string");
+        const parser = new DOMParser();
+        const containerDoc = parser.parseFromString(containerText, "application/xml");
+        const rootfile = containerDoc.querySelector("rootfile");
+        const opfPath = rootfile.getAttribute("full-path");
+
+        const opfText = await zip.file(opfPath).async("string");
+        const opfDoc = parser.parseFromString(opfText, "application/xml");
+
+        // robust 제목 추출: <dc:title> 태그에 id 등 속성이 있을 경우도 지원
+        let titleElem = opfDoc.querySelector('dc\\:title, title');
+        let bookTitle = titleElem ? titleElem.textContent : "제목 없음";
+        document.getElementById('book-title').textContent = bookTitle;
+
+        // 저자 추출
+        let authorElem = opfDoc.querySelector('dc\\:creator, creator');
+        let bookAuthor = authorElem ? authorElem.textContent : "저자 없음";
+        document.getElementById('book-author').textContent = bookAuthor;
+
+
+        // spine에서 읽기 순서 얻기
+        const spine = Array.from(opfDoc.querySelectorAll("spine > itemref")).map(itemref => itemref.getAttribute("idref"));
+
+        // manifest에서 각 idref에 해당하는 파일 경로 얻기
+        const manifest = {};
+        opfDoc.querySelectorAll("manifest > item").forEach(item => {
+            manifest[item.getAttribute("id")] = item.getAttribute("href");
+        });
+
+        for (const index in spine) {
+            const filename = manifest[spine[index]];
+            if (filename) {
+                pageList.push({ page: index, filename: filename });
+            }
+        }
+
+        // toc(ncx) 파일 경로 얻기
+        const ncxId = opfDoc.querySelector("spine").getAttribute("toc");
+        const ncxHref = manifest[ncxId];
+
+        // 수정: OPF 폴더 기준으로 NCX 전체 경로 만들기
+        const opfFolder = opfPath.substring(0, opfPath.lastIndexOf('/') + 1);
+        const ncxFullPath = opfFolder + ncxHref;
+
+        if (!zip.file(ncxFullPath)) {
+            console.error("NCX 파일을 찾을 수 없습니다:", ncxFullPath);
+            return [];
+        }
+        const ncxText = await zip.file(ncxFullPath).async("string");
+        const ncxDoc = parser.parseFromString(ncxText, "application/xml");
+
+        const navPoints = Array.from(ncxDoc.querySelectorAll("navPoint")).map(navPoint => ({
+            label: navPoint.querySelector("navLabel > text").textContent,
+            src: navPoint.querySelector("content").getAttribute("src").split('#')[0] // 앵커 제거
+        }));
+
+        // 화면에 출력
+        const tocDiv = document.getElementById("toc");
+        tocDiv.innerHTML = navPoints.map(point => `<a href="javascript:readPage('${point.src}'); toggleToc();" class="list-group-item list-group-item-action">${point.label}</a>`).join("");
+
+    }
+
+    function toggleToolbar() {
+        const toolbar = document.getElementById("toolbar");
+        if (toolbar.classList.contains("d-none")) {
+            toolbar.classList.remove("d-none");
+            setTimeout(() => {
+                toolbar.classList.remove("opacity-0");
+            }, 10);
+        } else {
+            toolbar.classList.add("opacity-0");
+            setTimeout(() => {
+                toolbar.classList.add("d-none");
+            }, 300);
+        }
+
+        if (document.getElementById("toc").classList.contains("show")) {
+            document.getElementById("toc").classList.remove("show");
+        }
+    }
+
+    function toggleToc() {
+        const toc = document.getElementById("toc");
+        toc.classList.toggle("show");
+    }
+
+    function prevPage() {
+        if (page > 0) {
+            page--;
+            document.getElementById("viewer").innerHTML = "";
+            readPage(pageList[page].filename);
+        }
+    }
+
+    function nextPage() {
+        page++;
+        document.getElementById("viewer").innerHTML = "";
+        readPage(pageList[page].filename);
+    }
+
+    async function readPage(filename) {
+        var newPage = Object.keys(zip.files).find(f => f.includes(filename));
+
+        const text = await zip.file(newPage).async("string");
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+
+        document.getElementById("viewer").innerHTML = doc.body.innerHTML;
+
+        document.getElementById("viewer").querySelectorAll("img").forEach(img => {
+            const imgSrc = img.getAttribute("src");
+            const matchedImage = images.find(image => image.filename == imgSrc.split("/").pop());
+            if (matchedImage) {
+                img.setAttribute("src", matchedImage.url);
+            }
+        });
+
+        document.getElementById("viewer").querySelectorAll("image").forEach(imageTag => {
+            const href = imageTag.getAttribute("xlink:href") || imageTag.getAttribute("href");
+
+            if (href) {
+                const matchedImage = images.find(image => image.filename == href.split("/").pop());
+                if (matchedImage) {
+                    imageTag.setAttribute("xlink:href", matchedImage.url);
+                    imageTag.setAttribute("href", matchedImage.url);
+                }
+            }
+        });
+
+        document.getElementById("viewer").querySelectorAll("a").forEach(a => {
+            a.href = `javascript:readPage('${a.href.split('/').pop().split('#')[0]}')`;
+        });
+
+        document.querySelectorAll('#viewer p, #viewer div, #viewer span').forEach(el => {
+            el.style.fontSize = getFontSize() + 'rem';
+            el.style.lineHeight = getLineHeight() + 'rem';
+            el.style.marginBottom = getParagraphSpacing() + 'rem';
+        });
+
+
+        if (page > 0) {
+            document.getElementById("prev-page").disabled = false;
+        } else {
+            document.getElementById("prev-page").disabled = true;
+        }
+
+        if (page < pageList.length - 1) {
+            document.getElementById("next-page").disabled = false;
+        } else {
+            document.getElementById("next-page").disabled = true;
+        }
+    }
+
+    async function translatePage() {
+        if (setting.apiKey.trim() == "") {
+            alert("API Key를 입력해주세요.");
+            var modal = new bootstrap.Modal(document.getElementById('settingModal'));
+            modal.show();
+            return;
+        }
+        var viewerDiv = document.getElementById('viewer');
+        var chunks = divideTextIntoChunks(viewerDiv);
+        console.log(chunks);
+
+        document.getElementById("viewer").innerHTML = "";
+        viewerDiv.appendChild(createSpinner('full'));
+
+        var index = 0;
+        for (let chunk of chunks) {
+
+            if (chunk.type == 'text') {
+                var response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-goog-api-key": setting.apiKey
+                    },
+                    body: JSON.stringify({
+                        "contents": [
+                            {
+                                "parts": [
+                                    {
+                                        "text": `${TRANSLATE_NOTE}
+        
+### 번역 노트
+${setting.translateNote}
+
+## 원문:
+${chunk.content}`
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+                })
+
+                var json = await response.json();
+                console.log(json);
+                if (json.error) {
+                    alert(`번역 중 오류가 발생했습니다: ${json.error.message} (코드: ${json.error.code})`);
+                    document.getElementById(`spinner`).remove();
+                    return;
+                }
+                let translatedText = json.candidates[0].content.parts[0].text;
+
+                document.getElementById(`spinner`).remove();
+
+
+                for (let p of translatedText.split("\n")) {
+                    if (p.trim()) {
+                        document.getElementById("viewer").innerHTML += `<p style="font-size: ${getFontSize()}rem; line-height: ${getLineHeight()}rem; margin-bottom: ${getParagraphSpacing()}rem;">${p}</p>`;
+                    } else {
+                        document.getElementById("viewer").innerHTML += `<p style="font-size: ${getFontSize()}rem; line-height: ${getLineHeight()}rem; margin-bottom: ${getParagraphSpacing()}rem;"><br /></p>`;
+                    }
+                }
+
+                document.getElementById("viewer").appendChild(createSpinner('inline'));
+
+            } else if (chunk.type == 'image') {
+                document.getElementById("viewer").innerHTML += chunk.content;
+            }
+
+            index++;
+        }
+
+        document.getElementById(`spinner`).remove();
+    }
+
+    function divideTextIntoChunks(elem) {
+        var chunks = [];
+
+        if (elem.textContent.trim()) {
+            var maxSize = 2000;
+            var chunk = "";
+
+            for (var node of elem.querySelectorAll('p, h1, h2, h3, h4, h5, a, img, image')) {
+                if (node.tagName.toLowerCase() == "img" || node.tagName.toLowerCase() == "image") {
+                    if (chunk.trim()) {
+                        chunks.push({ type: 'text', content: chunk });
+                        chunk = "";
+                    }
+                    chunks.push({ type: 'image', content: node.outerHTML });
+                } else {
+                    var nodeSize = node.textContent.length;
+
+                    if (chunk.length + nodeSize > maxSize) {
+                        chunks.push({ type: 'text', content: chunk });
+                        chunk = "";
+                    }
+
+                    chunk += node.textContent + "\n";
+                }
+            }
+
+            if (chunk.trim()) {
+                chunks.push({ type: 'text', content: chunk });
+            }
+
+        } else {
+            chunks.push({ type: 'image', content: elem.innerHTML });
+        }
+
+        return chunks;
+    }
+
+    function createSpinner(type = 'full') {
+        const spinner = document.createElement("div");
+        spinner.id = 'spinner';
+        spinner.innerHTML = `<div class="spinner-border text-secondary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="mt-3">페이지를 번역하는 중...</span>`;
+
+        if (type == 'full') {
+            spinner.className = "d-flex flex-column position-absolute top-0 start-0 bottom-0 end-0 align-items-center justify-content-center text-center text-secondary bg-body opacity-75 z-3";
+        } else {
+            spinner.className = "d-flex flex-column w-100 align-items-center justify-content-center text-center text-secondary bg-body opacity-75";
+        }
+
+        return spinner;
+    }
+
+    function getFontSize() {
+        return setting.fontSize * 0.10 + 0.9;
+    }
+
+    function getLineHeight() {
+        return setting.lineHeight * 0.5 + 0.5;
+    }
+
+    function getParagraphSpacing() {
+        return setting.paragraphSpacing * 0.5;
+    }
+
+</script>
+
+</html>

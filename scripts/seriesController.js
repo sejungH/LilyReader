@@ -12,10 +12,14 @@ async function getEpisodeFromURL(url) {
     try {
         const id = extractIDFromURL(url);
         if (id) {
-            const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`, {
+            const response = await fetch(`https://corsproxy.lilyd3v.workers.dev/`, {
+                method: 'POST',
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    url: `https://m.dcinside.com/board/lilyfever/${id}`
+                })
             });
             const html = await response.text();
 
@@ -47,7 +51,15 @@ async function getEpisodeFromURL(url) {
 
 async function getContent(id) {
     try {
-        const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`);
+        const response = await fetch(`https://corsproxy.lilyd3v.workers.dev/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: `https://m.dcinside.com/board/lilyfever/${id}`
+            })
+        });
         const html = await response.text();
         if (html) {
             const parser = new DOMParser();
@@ -56,7 +68,7 @@ async function getContent(id) {
             if (!content) {
                 content = doc.querySelector('.thum-txtin');
             }
-            content = cleanUpContent(content);
+            content = await cleanUpContent(content);
 
             let writer;
             if (doc.querySelector('.nickname')) {
@@ -99,7 +111,15 @@ async function getContent(id) {
 
 async function getEpisodesFromSeries(id) {
     try {
-        const response = await fetch(`https://corsproxy.io/?https://m.dcinside.com/board/lilyfever/${id}`);
+        const response = await fetch(`https://corsproxy.lilyd3v.workers.dev/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                url: `https://m.dcinside.com/board/lilyfever/${id}`
+            })
+        });
         const html = await response.text();
         if (html) {
             const parser = new DOMParser();
