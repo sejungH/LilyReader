@@ -7,7 +7,9 @@
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Chiron+GoRound+TC:wght@200..900&display=swap">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Chiron+GoRound+TC:wght@200..900&display=swap">
+    <link rel="stylesheet" href="./styles/style.css">
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
@@ -40,129 +42,10 @@
     <meta property="og:title" content="LILY READER">
     <meta property="og:description" content="대세는 백합 갤번역 리더기 by.LILYD3V">
     <title>LilyReader</title>
-
-    <style>
-        @font-face {
-            font-family: 'RIDIBatang';
-            src: url('./fonts/RIDIBatang.otf') format('opentype');
-            font-weight: normal;
-            font-style: normal;
-        }
-        
-        body {
-            font-family: "Chiron GoRound TC", sans-serif;
-        }
-
-        #episode-title,
-        #episode-content {
-            font-family: 'RIDIBatang', sans-serif;
-        }
-
-        #episode-content {
-            text-indent: 1rem;
-        }
-
-        #episode-content p:has(img) {
-            text-indent: 0;
-        }
-
-        @media (max-width: 768px) {
-            #episode-content img {
-                width: calc(100% + 2rem);
-                margin-left: -1rem;
-                cursor: pointer;
-                display: block;
-            }
-
-            #manga-title {
-                font-size: 0.8rem;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-        }
-
-        /* PC: 이미지 가운데 정렬 */
-        @media (min-width: 769px) {
-            #episode-content img {
-                width: auto;
-                max-width: 100%;
-                margin: auto auto;
-                display: block;
-                cursor: pointer;
-            }
-
-            #manga-title {
-                font-size: 1rem;
-            }
-        }
-
-        #episode-content iframe,
-        #episode-content embed {
-            aspect-ratio: 16 / 9;
-            width: 100%;
-            height: 100%;
-        }
-
-        input,
-        textarea,
-        select,
-        button {
-            touch-action: manipulation;
-        }
-
-        .icon {
-            width: 1.5rem;
-            height: 1.5rem;
-        }
-
-        #input-font-size,
-        #input-line-height,
-        #input-paragraph-margin {
-            width: 2rem;
-            font-size: 0.8rem;
-            padding-left: 0;
-            padding-right: 0;
-        }
-
-        #manga-container img {
-            min-width: 50%;
-            height: 100%;
-            object-fit: contain;
-            cursor: pointer;
-        }
-
-        #manga-view img[src=""] {
-            opacity: 0;
-        }
-    </style>
 </head>
 
 <body class="d-flex flex-column min-vh-100" data-bs-theme="dark">
-    <nav class="navbar navbar-expand-md bg-primary-subtle">
-        <div class="container-md">
-            <a class="navbar-brand" href="./"><i class="bi bi-book-fill fs-3 me-2"></i><span class="fs-3"
-                    style="font-family: 'Bebas Neue', sans-serif;">Lily Reader</span></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
-                <form class="ms-auto" role="search" onsubmit="return false;">
-                    <div class="d-flex dropdown position-relative">
-                        <input class="form-control" type="search" placeholder="검색" aria-label="Search"
-                            autocomplete="off" oninput="showSuggestions(this.value)" size="40" />
-                        <ul class="dropdown-menu dropdown-menu-dark w-100" id="autocomplete-list"
-                            style="max-height: 200px; overflow-y: auto; margin-top: 2.5rem;"></ul>
-                    </div>
-                </form>
-                <div id="login_container" class="mt-2 mt-md-0 ms-0 ms-md-3"></div>
-            </div>
-        </div>
-    </nav>
+    <nav></nav>
 
     <div id="main-container" class="container-md mb-4">
         <nav aria-label="breadcrumb" class="mt-3">
@@ -175,20 +58,20 @@
         <div id="content-container">
             <div class="row justify-content-between py-3 border-bottom">
                 <div class="col-auto">
-                    <button class="btn btn-sm btn-outline-light rounded-pill px-3 prev-episode"><i
+                    <button class="btn btn-sm btn-outline-body rounded-pill px-3 prev-episode"><i
                             class="bi bi-caret-left-fill"></i>
                         이전화</button>
                 </div>
                 <div class="col-auto text-end">
-                    <button class="btn btn-sm btn-outline-light rounded-pill px-3 next-episode">다음화 <i
+                    <button class="btn btn-sm btn-outline-body rounded-pill px-3 next-episode">다음화 <i
                             class="bi bi-caret-right-fill"></i></button>
                 </div>
             </div>
             <div class="row my-4">
                 <h1 id="episode-title" class="h4 fw-bold mb-4"></h1>
                 <div class="mb-4">
-                    <span class="badge bg-secondary">글쓴이</span> <span id="episode-writer" class="badge me-4"></span>
-                    <span class="badge bg-secondary">작성일</span> <span id="episode-date" class="badge"></span>
+                    <span class="badge bg-secondary">글쓴이</span> <span id="episode-writer" class="badge text-body me-4"></span>
+                    <span class="badge bg-secondary">작성일</span> <span id="episode-date" class="badge text-body"></span>
                 </div>
                 <div class="d-flex gap-0 gap-md-5 py-2 mb-3 justify-content-center">
                     <div class="d-flex align-items-center">
@@ -254,11 +137,11 @@
                                 aria-valuemin="0"></div>
                         </div>
                         <div class="d-flex bg-dark p-3">
-                            <button id="btn-prev-episode" class="btn btn-sm btn-outline-light rounded-pill px-3"><i
+                            <button id="btn-prev-episode" class="btn btn-sm btn-outline-body rounded-pill px-3"><i
                                     class="bi bi-caret-left-fill"></i>
                                 이전화</button>
                             <button id="btn-next-episode"
-                                class="btn btn-sm btn-outline-light rounded-pill px-3 ms-auto">다음화 <i
+                                class="btn btn-sm btn-outline-body rounded-pill px-3 ms-auto">다음화 <i
                                     class="bi bi-caret-right-fill"></i></button>
                         </div>
                     </div>
@@ -266,12 +149,12 @@
             </div>
             <div class="row justify-content-between pt-3 border-top">
                 <div class="col-auto">
-                    <button class="btn btn-sm btn-outline-light rounded-pill px-3 prev-episode"><i
+                    <button class="btn btn-sm btn-outline-body rounded-pill px-3 prev-episode"><i
                             class="bi bi-caret-left-fill"></i>
                         이전화</button>
                 </div>
                 <div class="col-auto text-end">
-                    <button class="btn btn-sm btn-outline-light rounded-pill px-3 next-episode">다음화 <i
+                    <button class="btn btn-sm btn-outline-body rounded-pill px-3 next-episode">다음화 <i
                             class="bi bi-caret-right-fill"></i></button>
                 </div>
             </div>
@@ -279,12 +162,7 @@
         <div id="comment-container" class="mt-4"></div>
     </div>
 
-    <footer class="bg-secondary-subtle mt-auto">
-        <div class="container-md py-4 text-center">
-            <p class="text-muted mb-2">&copy; 2025 Lily Reader</p>
-            <a href="mailto:lilyd3v@gmail.com" class="text-secondary"><small>버그 및 오류 제보</small></a>
-        </div>
-    </footer>
+    <footer></footer>
 
     <div id="spinner" class="bg-dark bg-opacity-50 position-fixed top-0 bottom-0 start-0 end-0 z-5">
         <div class="position-absolute top-50 start-50 translate-middle z-3">
@@ -325,8 +203,7 @@
         init();
 
         async function init() {
-            user = await initUser();
-            initGoogleAuth();
+            await initPage();
 
             document.getElementById('series-list').innerHTML = '';
             const data = await firebaseDB.readDataById(seriesId);
@@ -348,38 +225,48 @@
                 const episode = filteredEpisodes.find(ep => ep.id === episodeId);
                 if (episode) {
                     for (let td of document.getElementById(`table-${seriesId}`).querySelector(`tr[data-id="${episodeId}"]`).children) {
-                        td.classList.add('bg-primary')
-                        td.classList.remove('text-secondary-emphasis');
+                        td.classList.add('text-bg-primary')
+                        td.classList.remove('opacity-50');
                     }
 
                     if (document.getElementById('episode-content').innerHTML == "") {
-                        const content = await getContent(episodeId);
-                        document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
-                        document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${getURL(episodeId)}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
-                        document.getElementById('episode-content').innerHTML = content.content;
-                        document.getElementById('episode-writer').innerText = content.writer;
-                        document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
+                        try {
+                            const content = await getContent(episodeId);
+                            document.querySelector('title').innerText = `${episode.title} | Lily Reader`;
+                            document.getElementById('episode-title').innerHTML = `${episode.title} <a href='${getURL(episodeId)}' target='_blank'><i class="bi bi-link-45deg"></i></a>`;
+                            document.getElementById('episode-content').innerHTML = content.content;
+                            document.getElementById('episode-writer').innerText = content.writer;
+                            document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
 
-                        if (content.comments.length > 0) {
-                            document.getElementById('comment-container').innerHTML = `<span class='fw-bold my-2'>전체 댓글 ${content.comments.length}개</span>`;
-                        }
-                        content.comments.forEach(comment => {
-                            const commentDiv = document.createElement('div');
-                            if (comment.type === 'reply') {
-                                commentDiv.className = 'card my-2 ms-4 bg-secondary-subtle';
-                            } else {
-                                commentDiv.className = 'card my-2';
+                            if (content.comments.length > 0) {
+                                document.getElementById('comment-container').innerHTML = `<span class='fw-bold my-2'>전체 댓글 ${content.comments.length}개</span>`;
                             }
-                            commentDiv.innerHTML = `
-                            <div class="card-body">
-                                <span class="fw-bold">${comment.nickname}</span>
-                                <p id="comment-${comment.id}" class="card-text py-2"></p>
-                                <footer class="blockquote-footer mb-0">${comment.datetime}</footer>
-                            </div>
-                        `;
-                            document.getElementById('comment-container').appendChild(commentDiv);
-                            loadDcCon(comment.id, comment.comment);
-                        });
+                            content.comments.forEach(comment => {
+                                const commentDiv = document.createElement('div');
+                                if (comment.type === 'reply') {
+                                    commentDiv.className = 'card my-2 ms-4 bg-secondary-subtle';
+                                } else {
+                                    commentDiv.className = 'card my-2';
+                                }
+                                commentDiv.innerHTML = `
+                                <div class="card-body">
+                                    <span class="fw-bold">${comment.nickname}</span>
+                                    <p id="comment-${comment.id}" class="card-text py-2"></p>
+                                    <footer class="blockquote-footer mb-0">${comment.datetime}</footer>
+                                </div>`;
+                                document.getElementById('comment-container').appendChild(commentDiv);
+                                loadDcCon(comment.id, comment.comment);
+                            });
+
+                        } catch (error) {
+                            document.getElementById('content-container').innerHTML = `
+                            <div class="position-sticky top-0 start-0 text-center text-secondary h-100 w-100 py-5 my-5">
+                                <h1 class="fw-bold">ERROR 410</h1>
+                                <span>삭제된 에피소드입니다.</span>
+                            </div>`;
+                            hideSpinner();
+                            return;
+                        }
                     }
 
 

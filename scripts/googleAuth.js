@@ -3,7 +3,7 @@ function initGoogleAuth() {
     const login_container = document.getElementById('login_container');
     if (!user) {
         login_container.innerHTML = `
-        <button class="btn btn-outline-light rounded-pill d-flex align-items-center justify-content-center gap-1 w-100 w-md-auto px-3"
+        <button class="btn btn-outline-body rounded-pill d-flex align-items-center justify-content-center gap-1 w-100 w-md-auto px-3"
             type="button" onclick="login()">
             <i class="bi bi-google me-1"></i>
             <span><small>로그인</small></span>
@@ -12,7 +12,7 @@ function initGoogleAuth() {
     } else {
         login_container.classList.add('position-relative');
         login_container.innerHTML = `
-        <button class="btn btn-outline-light rounded-pill d-flex align-items-center justify-content-center gap-1 w-100 w-md-auto px-3"
+        <button class="btn btn-outline-body rounded-pill d-flex align-items-center justify-content-center gap-1 w-100 w-md-auto px-3"
             type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <img src="${user.userInfo.picture}" alt="Profile Picture" class="rounded-circle" style="height:1.6rem; width:1.6rem; object-fit:cover;"/>
             <span class="text-uppercase"><small>${user.userInfo.name}</small></span>

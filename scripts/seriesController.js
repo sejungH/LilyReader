@@ -64,10 +64,15 @@ async function getContent(id) {
         if (html) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            let content = doc.querySelector('.write_div');
-            if (!content) {
+            let content;
+            if (doc.querySelector('.write_div')) {
+                content = doc.querySelector('.write_div');
+            } else if (doc.querySelector('.thum-txtin')) {
                 content = doc.querySelector('.thum-txtin');
+            } else {
+                throw new Error("No content found");
             }
+
             content = await cleanUpContent(content);
 
             let writer;

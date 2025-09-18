@@ -1,0 +1,21 @@
+<div class="navbar navbar-expand-md bg-primary-subtle">
+    <div class="container-md">
+        <a class="navbar-brand" href="./"><i class="bi bi-book-fill fs-3 me-2"></i><span class="fs-3"
+                style="font-family: 'Bebas Neue', sans-serif;">Lily Reader</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse mt-2 mt-md-0" id="navbarSupportedContent">
+            <form class="ms-auto" role="search" onsubmit="return false;">
+                <div class="d-flex dropdown position-relative">
+                    <input class="form-control" type="search" placeholder="검색" aria-label="Search" autocomplete="off"
+                        oninput="showSuggestions(this.value)" size="40" />
+                    <ul class="dropdown-menu dropdown-menu-dark w-100" id="autocomplete-list"
+                        style="max-height: 200px; overflow-y: auto; margin-top: 2.5rem;"></ul>
+                </div>
+            </form>
+            <div id="login_container" class="mt-2 mt-md-0 ms-0 ms-md-3" style="color-scheme: light"></div>
+        </div>
+    </div>
+</div>

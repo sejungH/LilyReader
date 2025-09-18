@@ -1,3 +1,51 @@
+async function initPage() {
+    let view = localStorage.getItem('mode') || 'dark';
+    if (view === 'dark') {
+        document.body.setAttribute('data-bs-theme', 'dark');
+    } else {
+        document.body.setAttribute('data-bs-theme', 'light');
+    }
+
+    // Initialize header
+    await fetch('header.html')
+        .then(response => response.text())
+        .then(data => {
+            document.querySelector('nav').innerHTML = data;
+        })
+        .catch(error => console.error('Error loading nav:', error));
+
+    user = await initUser();
+    initGoogleAuth();
+
+    // Initialize footer
+    await fetch('footer.html')
+        .then(response => response.text())
+        .then(data => {
+            document.querySelector('footer').innerHTML = data;
+            document.querySelector('footer').classList.add('mt-auto');
+        })
+        .catch(error => console.error('Error loading footer:', error));
+
+    if (view === 'dark') {
+        document.getElementById('view-mode-toggle').innerHTML = `<i class="bi bi-sun-fill"></i> 라이트모드`;
+    } else {
+        document.getElementById('view-mode-toggle').innerHTML = `<i class="bi bi-moon-fill"></i> 다크모드`;
+    }
+}
+
+function toggleViewMode() {
+    let view = localStorage.getItem('mode') || 'dark';
+    if (view === 'dark') {
+        localStorage.setItem('mode', 'light');
+        document.getElementById('view-mode-toggle').innerHTML = `<i class="bi bi-moon-fill"></i> 다크모드`;
+        document.body.setAttribute('data-bs-theme', 'light');
+    } else {
+        localStorage.setItem('mode', 'dark');
+        document.getElementById('view-mode-toggle').innerHTML = `<i class="bi bi-sun-fill"></i> 라이트모드`;
+        document.body.setAttribute('data-bs-theme', 'dark');
+    }
+}
+
 function loadTags() {
     var tagsContainer = document.getElementById('tags');
     tagsContainer.innerHTML = '';
@@ -67,10 +115,12 @@ async function loadSeries(series) {
                     <div class="col">
                         <div id='series-title-${series.id}' class="fs-6 fw-bold mb-2">${getBookmarkIcon(bookmarks, series.id)}${series.title}</div>
                         <div class="my-2"><span class="badge bg-primary">총 에피소드</span> <span id="episode-count-${series.id}"
-                                class="badge">${episode_count}</span></div>
+                                class="badge text-body">${episode_count}</span></div>
                         <div class="my-2"><span class="badge bg-primary">최근 업데이트</span> <span id="status-${series.id}"
-                                class="badge">${last_episode.datetime.toISOString().split('T')[0]}</span></div>
-                        <div id="series-tags-${series.id}" class="d-flex align-items-center gap-1 my-2 series-tags">${series.tags ? series.tags.map(tag => `<span class="badge text-bg-light rounded-pill"><i class="bi bi-hash"></i>${tag}</span>`).join(' ') : ''}</div>
+                                class="badge text-body">${last_episode.datetime.toISOString().split('T')[0]}</span></div>
+                        <div id="series-tags-${series.id}" class="d-flex align-items-center gap-1 my-2 series-tags">
+                            ${series.tags ? series.tags.map(tag => `<span class="badge text-bg-body rounded-pill"><i class="bi bi-hash"></i>${tag}</span>`).join(' ') : ''}
+                        </div>
                         <div class="text-end mt-3">
                             <a href="javascript:deleteSeries('${series.id}')" id="btn-delete-series-${series.id}" class="btn btn-sm btn-danger collapse">
                                 <i class="bi bi-trash"></i> 삭제</a>
@@ -144,7 +194,7 @@ function loadEpisode(series) {
     let accordion_body = document.getElementById(`flush-collapse-${series.id}`).getElementsByClassName('accordion-body')[0];
     accordion_body.innerHTML = `
     <form onsubmit="saveSeries('${series.id}'); return false;">
-        <table id="table-${series.id}" class="table table-sm table-striped table-hover">
+        <table id="table-${series.id}" class="table table-sm table-hover">
             <thead>
                 <tr>
                     <th class="collapse drag-icon" width='30'></th>
@@ -160,8 +210,8 @@ function loadEpisode(series) {
                 return `
             <tr data-id="${episode.id}" style="cursor: pointer;" onclick="location.href='read?series=${series.id}&episode=${episode.id}'">
                 <td class="text-center align-middle collapse drag-icon handle"><i class="bi bi-list"></i></td>
-                <td class="text-secondary-emphasis"><small>${episode.title}</small></td>
-                <td class="d-none d-md-table-cell text-center text-secondary-emphasis"><small>${episode.datetime.toISOString().split('T')[0]}</small></td>
+                <td class="opacity-50"><small>${episode.title}</small></td>
+                <td class="d-none d-md-table-cell text-center opacity-50"><small>${episode.datetime.toISOString().split('T')[0]}</small></td>
                 <td class="text-center align-middle collapse delete-icon">
                     <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
                 </td>
@@ -180,10 +230,10 @@ function loadEpisode(series) {
         } else {
             return `
             <tr data-id="${episode.id}">
-                <td class="text-center align-middle collapse drag-icon handle bg-black"><i class="bi bi-list"></i></td>
-                <td class="fw-bold bg-black"><small>${episode.title}</small></td>
-                <td class="d-none d-md-table-cell bg-black"></td>
-                <td class="text-center align-middle collapse delete-icon bg-black">
+                <td class="text-center align-middle collapse drag-icon handle bg-secondary-subtle text-body"><i class="bi bi-list"></i></td>
+                <td class="fw-bold bg-secondary-subtle text-body"><small>${episode.title}</small></td>
+                <td class="d-none d-md-table-cell bg-secondary-subtle text-body"></td>
+                <td class="text-center align-middle collapse delete-icon bg-secondary-subtle text-body">
                     <i class="bi bi-trash text-danger" style="cursor: pointer;" onclick="removeRow(this)"></i>
                 </td>
             </tr>`;
