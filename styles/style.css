@@ -9,7 +9,6 @@ body {
     font-family: "Chiron GoRound TC", sans-serif;
 }
 
-
 input:checked + .btn-outline-body {
     background-color: var(--bs-body-color) !important;
     border: 1px solid var(--bs-body-color) !important;
@@ -36,11 +35,6 @@ input + .btn-outline-body:hover {
 .text-bg-body {
   color: var(--bs-body-bg);
   background-color: var(--bs-body-color);
-}
-
-img[src="./images/cover_placeholder.png"],
-img[src="https://www.lilyreader.online/images/cover_placeholder.png"] {
-    filter: brightness(0.8);
 }
 
 #episode-title,
@@ -106,6 +100,10 @@ button {
 .icon {
     width: 1.5rem;
     height: 1.5rem;
+}
+
+body[data-bs-theme="light"] .icon {
+    filter: invert(1);
 }
 
 #input-font-size,
