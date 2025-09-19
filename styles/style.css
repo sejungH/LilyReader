@@ -9,6 +9,7 @@ body {
     font-family: "Chiron GoRound TC", sans-serif;
 }
 
+
 input:checked + .btn-outline-body {
     background-color: var(--bs-body-color) !important;
     border: 1px solid var(--bs-body-color) !important;
@@ -126,4 +127,9 @@ button {
 
 #manga-view img[src=""] {
     opacity: 0;
+}
+
+
+body[data-bs-theme="light"] #icon-manga-start {
+    filter: invert(1);
 }
