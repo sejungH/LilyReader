@@ -164,7 +164,7 @@ async function loadSeries(series) {
                         <span class="badge text-bg-primary rounded-pill">${episode_count}</span>
                     </div>
                     <div class="position-absolute bottom-0 start-50 translate-middle-x fs-6 p-2">
-                        <span class="badge text-bg-dark py-1 px-2 fw-light">${last_episode.datetime.toISOString().split('T')[0]}</span>
+                        <span class="badge bg-body text-body py-1 px-2 fw-light">${last_episode.datetime.toISOString().split('T')[0]}</span>
                     </div>
                 </div>
                 <div id="series-title-${series.id}" class="fw-bold mb-2 mt-2 text-center">${series.title}</div>

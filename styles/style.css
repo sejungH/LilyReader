@@ -50,9 +50,28 @@ input + .btn-outline-body:hover {
     text-indent: 0;
 }
 
+.og-wrap {
+    text-indent: 0;
+}
+
+.og-img img {
+    width: 100% !important;
+    height: 100%;
+    margin-left: 0 !important;
+    object-fit: cover;
+    display: block;
+}
+
 @media (max-width: 768px) {
     #episode-content img {
         width: calc(100% + 2rem);
+        margin-left: -1rem;
+        cursor: pointer;
+        display: block;
+    }
+
+    #episode-content iframe {
+        width: calc(100% + 2rem) !important;
         margin-left: -1rem;
         cursor: pointer;
         display: block;
@@ -88,6 +107,8 @@ input + .btn-outline-body:hover {
     aspect-ratio: 16 / 9;
     width: 100%;
     height: 100%;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 input,

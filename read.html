@@ -70,7 +70,8 @@
             <div class="row my-4">
                 <h1 id="episode-title" class="h4 fw-bold mb-4"></h1>
                 <div class="mb-4">
-                    <span class="badge bg-secondary">글쓴이</span> <span id="episode-writer" class="badge text-body me-4"></span>
+                    <span class="badge bg-secondary">글쓴이</span> <span id="episode-writer"
+                        class="badge text-body me-4"></span>
                     <span class="badge bg-secondary">작성일</span> <span id="episode-date" class="badge text-body"></span>
                 </div>
                 <div class="d-flex gap-0 gap-md-5 py-2 mb-3 justify-content-center">
@@ -106,8 +107,7 @@
                     </div>
                 </div>
                 <div id="episode-content" class="overflow-x-hidden"></div>
-                <div id="manga-container"
-                    class="position-absolute overflow-hidden bg-secondary-subtle p-0 z-2 visually-hidden">
+                <div id="manga-container" class="position-absolute overflow-hidden bg-body p-0 z-2 visually-hidden">
                     <div id="manga-view" class="d-flex justify-content-center align-items-center h-100">
                         <img id="manga-image-1" /><img id="manga-image-2" />
                     </div>
@@ -117,7 +117,8 @@
                         onclick="toggleMangaToolbar()"></div>
                     <div class="position-absolute top-0 bottom-0 end-0" style="width: 30vw" onclick="mangaRight()">
                     </div>
-                    <div class="manga-toolbar d-flex align-items-center position-absolute top-0 w-100 bg-body text-body p-3 z-5">
+                    <div
+                        class="manga-toolbar d-flex align-items-center position-absolute top-0 w-100 bg-body text-body p-3 z-5">
                         <span id="manga-title" class="fw-bold"></span>
                         <button id="btn-manga-view" class="btn ms-auto fs-4 py-0"
                             onclick="toggleMangaView(this)"></button>
@@ -160,11 +161,35 @@
             </div>
         </div>
         <div id="comment-container" class="mt-4"></div>
+
+        <div id="buttons-under-comment" class="row justify-content-between pt-4">
+            <div class="col-auto">
+                <button class="btn btn-sm btn-outline-body rounded-pill px-3 prev-episode"><i
+                        class="bi bi-caret-left-fill"></i>
+                    이전화</button>
+            </div>
+            <div class="col-auto text-end">
+                <button class="btn btn-sm btn-outline-body rounded-pill px-3 next-episode">다음화 <i
+                        class="bi bi-caret-right-fill"></i></button>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column align-items-end position-sticky end-0 p-3" style="height: 0; bottom: 80px;">
+            <button type="button" class="btn bg-primary-subtle opacity-50 border rounded-top-start-0 rounded-bottom-0"
+                onclick="window.scrollTo({ top: 0, behavior: 'smooth' });">
+                <i class="bi bi-caret-up-fill"></i>
+            </button>
+            <button type="button" class="btn bg-primary-subtle opacity-50 border rounded-top-0 rounded-bottom-start-0"
+                onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });">
+                <i class="bi bi-caret-down-fill"></i>
+            </button>
+        </div>
+
     </div>
 
     <footer></footer>
 
-    <div id="spinner" class="bg-dark bg-opacity-50 position-fixed top-0 bottom-0 start-0 end-0 z-5">
+    <div id="spinner" class="bg-body bg-opacity-50 position-fixed top-0 bottom-0 start-0 end-0 z-5">
         <div class="position-absolute top-50 start-50 translate-middle z-3">
             <div class="d-flex justify-content-center my-3">
                 <div class="spinner-border" role="status">
@@ -174,7 +199,7 @@
         </div>
     </div>
 
-    <div class="toast-container position-fixed top-50 start-50 translate-middle  p-3">
+    <div class="toast-container position-fixed top-50 start-50 translate-middle p-3">
         <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="1000">
             <div class="toast-header">
                 <i class="bi bi-book-fill me-2"></i>
@@ -240,6 +265,8 @@
 
                             if (content.comments.length > 0) {
                                 document.getElementById('comment-container').innerHTML = `<span class='fw-bold my-2'>전체 댓글 ${content.comments.length}개</span>`;
+                            } else {
+                                document.getElementById('buttons-under-comment').innerHTML = '';
                             }
                             content.comments.forEach(comment => {
                                 const commentDiv = document.createElement('div');
@@ -331,16 +358,20 @@
         }
 
         function setParagraphStyle() {
-            const fontSize = localStorage.getItem('fontSize') || '1';
-            const lineHeight = localStorage.getItem('lineHeight') || '2';
-            const paragraphMargin = localStorage.getItem('paragraphMargin') || '1';
+            let fontSize = localStorage.getItem('fontSize') || '1';
+            let lineHeight = localStorage.getItem('lineHeight') || '2';
+            let paragraphMargin = localStorage.getItem('paragraphMargin') || '1';
+
+            if (Number.isNaN(Number(fontSize))) fontSize = '1';
+            if (Number.isNaN(Number(lineHeight))) lineHeight = '2';
+            if (Number.isNaN(Number(paragraphMargin))) paragraphMargin = '1';
 
             document.getElementById('input-font-size').innerText = fontSize;
             document.getElementById('input-line-height').innerText = lineHeight;
             document.getElementById('input-paragraph-margin').innerText = paragraphMargin;
 
             document.getElementById('episode-content').querySelectorAll('*').forEach(el => {
-                if (!el.closest('.og-div') && el.textContent.trim()) {
+                if (!el.closest('.og-wrap') && el.textContent.trim()) {
                     el.style.fontSize = fontSize + 'rem';
                     el.style.lineHeight = lineHeight + 'rem';
                     el.style.marginTop = paragraphMargin + 'rem';
@@ -356,7 +387,7 @@
             input.innerText = value;
             var content = document.getElementById('episode-content');
             content.querySelectorAll('*').forEach(el => {
-                if (!el.closest('.og-div') && el.textContent.trim()) {
+                if (!el.closest('.og-wrap') && el.textContent.trim()) {
                     el.style.fontSize = value + 'rem';
                 }
             });
@@ -370,7 +401,7 @@
             input.innerText = value;
             var content = document.getElementById('episode-content');
             content.querySelectorAll('*').forEach(el => {
-                if (!el.closest('.og-div') && el.textContent.trim()) {
+                if (!el.closest('.og-wrap') && el.textContent.trim()) {
                     el.style.lineHeight = value + 'rem';
                 }
             });
@@ -384,7 +415,7 @@
             input.innerText = value;
             var content = document.getElementById('episode-content');
             content.querySelectorAll('*').forEach(el => {
-                if (!el.closest('.og-div') && el.textContent.trim()) {
+                if (!el.closest('.og-wrap') && el.textContent.trim()) {
                     el.style.marginTop = value + 'rem';
                     el.style.marginBottom = value + 'rem';
                 }
@@ -393,14 +424,25 @@
         }
 
         function openMangaView() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
             document.querySelector('body').classList.add('overflow-hidden');
             const mangaContainer = document.getElementById('manga-container');
             mangaContainer.classList.remove('visually-hidden');
             mangaContainer.addEventListener("touchmove", function (e) {
                 e.preventDefault();
             }, { passive: false });
-            adjustMangaView();
-            window.addEventListener("resize", adjustMangaView);
+
+            mangaContainer.style.top = 0;
+            mangaContainer.style.left = 0;
+            window.scrollTo({ top: 0, behavior: "instant" });
+            mangaContainer.style.height = window.innerHeight + "px";
+            mangaContainer.style.width = window.innerWidth + "px";
+            window.addEventListener("resize", function () {
+                mangaContainer.style.height = window.innerHeight + "px";
+                mangaContainer.style.width = window.innerWidth + "px";
+            });
 
             document.getElementById('episode-content').classList.add('opacity-0');
             document.getElementById('comment-container').classList.add('opacity-0');
@@ -472,26 +514,14 @@
         }
 
         function closeMangaView() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
             document.querySelector('body').classList.remove('overflow-hidden');
             document.getElementById('manga-container').classList.add('visually-hidden');
             document.getElementById('episode-content').classList.remove('opacity-0');
             document.getElementById('comment-container').classList.remove('opacity-0');
             window.scrollTo({ top: document.getElementById(`image-${currPage}`).offsetTop - 70, behavior: "instant" });
-        }
-
-        function adjustMangaView() {
-            const mangaContainer = document.getElementById('manga-container');
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-            if (isMobile) {
-                mangaContainer.style.top = window.scrollY + "px";
-            } else {
-                mangaContainer.style.top = 0;
-                window.scrollTo({ top: 0, behavior: "instant" });
-            }
-            mangaContainer.style.left = 0;
-            mangaContainer.style.height = window.innerHeight + "px";
-            mangaContainer.style.width = window.innerWidth + "px";
         }
 
         function toggleMangaToolbar() {

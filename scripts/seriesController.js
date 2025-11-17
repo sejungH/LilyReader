@@ -185,11 +185,15 @@ function cleanUpContent(doc) {
     }
 
     for (const p of paragraphs) {
-        if (!p.querySelector('div') && !p.querySelector('a')) {
-            if (p.querySelector('span') || p.querySelector('font')) {
-                p.innerHTML = extractTextBrImg(p);
-            }
-        }
+        let spans = p.querySelectorAll('span');
+        spans.forEach(span => span.removeAttribute('style'));
+        let fonts = p.querySelectorAll('font');
+        fonts.forEach(font => { 
+            font.removeAttribute('style');
+            font.removeAttribute('color');
+            font.removeAttribute('face');
+            font.removeAttribute('size');
+         });
     }
 
     const images = doc.querySelectorAll('img');
