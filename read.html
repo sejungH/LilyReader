@@ -262,6 +262,9 @@
                             document.getElementById('episode-content').innerHTML = content.content;
                             document.getElementById('episode-writer').innerText = content.writer;
                             document.getElementById('episode-date').innerText = new Date(episode.datetime).toLocaleString();
+                            
+                            document.querySelector('meta[property="og:title"]').setAttribute('content', `${series.title} | Lily Reader`);
+                            document.querySelector('meta[property="og:description"]').setAttribute('content', `${episode.title}`);
 
                             if (content.comments.length > 0) {
                                 document.getElementById('comment-container').innerHTML = `<span class='fw-bold my-2'>전체 댓글 ${content.comments.length}개</span>`;
