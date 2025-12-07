@@ -9,32 +9,37 @@ body {
     font-family: "Chiron GoRound TC", sans-serif;
 }
 
-input:checked + .btn-outline-body {
+body[data-bs-theme="dark"] {
+    --bs-body-color: #e4e6eb;
+    --bs-body-bg: #000000;
+}
+
+input:checked+.btn-outline-body {
     background-color: var(--bs-body-color) !important;
     border: 1px solid var(--bs-body-color) !important;
     color: var(--bs-body-bg) !important;
 }
 
-input + .btn-outline-body:hover {
+input+.btn-outline-body:hover {
     background-color: var(--bs-body-color) !important;
     border: 1px solid var(--bs-body-color) !important;
     color: var(--bs-body-bg) !important;
 }
 
 .btn-outline-body {
-  color: var(--bs-body-color);
-  border: 1px solid var(--bs-body-color);
-  background-color: transparent;
+    color: var(--bs-body-color);
+    border: 1px solid var(--bs-body-color);
+    background-color: transparent;
 }
 
 .btn-outline-body:hover {
-  background-color: var(--bs-body-color);
-  color: var(--bs-body-bg);
+    background-color: var(--bs-body-color);
+    color: var(--bs-body-bg);
 }
 
 .text-bg-body {
-  color: var(--bs-body-bg);
-  background-color: var(--bs-body-color);
+    color: var(--bs-body-bg);
+    background-color: var(--bs-body-color);
 }
 
 #episode-title,
@@ -69,14 +74,12 @@ input + .btn-outline-body:hover {
         cursor: pointer;
         display: block;
     }
-
     #episode-content iframe {
         width: calc(100% + 2rem) !important;
         margin-left: -1rem;
         cursor: pointer;
         display: block;
     }
-
     #manga-title {
         font-size: 0.8rem;
         display: -webkit-box;
@@ -87,7 +90,9 @@ input + .btn-outline-body:hover {
     }
 }
 
+
 /* PC: 이미지 가운데 정렬 */
+
 @media (min-width: 769px) {
     #episode-content img {
         width: auto;
@@ -96,7 +101,6 @@ input + .btn-outline-body:hover {
         display: block;
         cursor: pointer;
     }
-
     #manga-title {
         font-size: 1rem;
     }
@@ -147,7 +151,6 @@ body[data-bs-theme="light"] .icon {
 #manga-view img[src=""] {
     opacity: 0;
 }
-
 
 body[data-bs-theme="light"] #icon-manga-start {
     filter: invert(1);
